@@ -10,3 +10,7 @@ docs/out
 # claude code local config
 .claude/
 .agents/
+
+.source/
+
+skills-lock.json

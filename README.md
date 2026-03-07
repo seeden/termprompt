@@ -1,8 +1,23 @@
 # termprompt
 
-Beautiful terminal prompts with structured output for rich terminal hosts.
+Beautiful terminal prompts for Node.js. Zero dependencies.
 
-Works like any prompt library in a normal terminal. Emits [OSC 7770](./PROTOCOL.md) escape sequences that terminal hosts can intercept to show native UI (modals, buttons, panels). If nothing intercepts the sequence, the user sees a normal TUI prompt. Zero degradation, zero config.
+Every prompt emits [OSC 7770](./SPEC.md) escape sequences alongside the TUI. Smart terminals (web terminals, IDE terminals, multiplexers) can intercept the structured data and render native UI. Standard terminals ignore the sequences and show the TUI. Zero config, zero degradation.
+
+```
+┌  create-app
+│
+◆  Project name?
+│  my-app
+◆  Pick a framework
+│  Next.js
+◆  Select features
+│  TypeScript, Vitest
+◆  Initialize git?
+│  Yes
+◆  Project created!
+└  Happy coding.
+```
 
 ## Install
 
@@ -10,244 +25,393 @@ Works like any prompt library in a normal terminal. Emits [OSC 7770](./PROTOCOL.
 npm install termprompt
 ```
 
-## Usage
+## Quick start
 
 ```typescript
-import {
-  select, confirm, input, multiselect, password, search,
-  group, spinner, intro, outro, note, log, isCancel,
-} from "termprompt";
+import { setTheme, intro, outro, select, input, isCancel, log } from 'termprompt';
 
-const env = await select({
-  message: "Deploy to which environment?",
+setTheme({ accent: '#7c3aed' });
+intro('create-app');
+
+const name = await input({
+  message: 'Project name?',
+  placeholder: 'my-app',
+});
+if (isCancel(name)) process.exit(0);
+
+const framework = await select({
+  message: 'Pick a framework',
   options: [
-    { value: "staging", label: "Staging", hint: "Safe to test" },
-    { value: "production", label: "Production", hint: "Goes live" },
+    { value: 'next', label: 'Next.js', hint: 'React SSR' },
+    { value: 'hono', label: 'Hono', hint: 'Edge-first' },
+    { value: 'astro', label: 'Astro', hint: 'Content sites' },
   ],
 });
+if (isCancel(framework)) process.exit(0);
 
-if (isCancel(env)) {
-  process.exit(0);
-}
-
-const approved = await confirm({
-  message: `Deploy to ${env}?`,
-});
-
-if (isCancel(approved) || !approved) {
-  process.exit(0);
-}
-
-const tag = await input({
-  message: "Release tag?",
-  placeholder: "v1.0.0",
-  validate: (v) => (v.startsWith("v") ? true : "Must start with v"),
-});
-
-const features = await multiselect({
-  message: "Include features?",
-  options: [
-    { value: "auth", label: "Authentication" },
-    { value: "analytics", label: "Analytics" },
-    { value: "notifications", label: "Notifications" },
-  ],
-});
+log.success(`Created ${name} with ${framework}.`);
+outro('Happy coding.');
 ```
 
 ## Prompts
 
-### `select<T>(config): Promise<T | Cancel>`
+### select
 
 Pick one option from a list.
 
 ```typescript
-const result = await select({
-  message: "Framework?",
+const framework = await select({
+  message: 'Pick a framework',
   options: [
-    { value: "next", label: "Next.js", hint: "React" },
-    { value: "hono", label: "Hono", hint: "Edge" },
-    { value: "express", label: "Express", disabled: true },
+    { value: 'next', label: 'Next.js', hint: 'React SSR' },
+    { value: 'hono', label: 'Hono', hint: 'Edge-first' },
+    { value: 'express', label: 'Express', disabled: true },
   ],
-  initialValue: "next",
+  initialValue: 'next',
   maxItems: 5,
 });
 ```
 
+```
+◇  Pick a framework
+│  ◉ Next.js (React SSR)
+│  ○ Hono
+│  ○ Astro
+└
+```
+
 Keys: `Up/Down` or `j/k` to navigate, `Enter` to submit, `Esc` to cancel.
 
-### `confirm(config): Promise<boolean | Cancel>`
+### confirm
 
 Yes or no.
 
 ```typescript
 const ok = await confirm({
-  message: "Continue?",
+  message: 'Deploy to production?',
   initialValue: true,
-  active: "Yes",
-  inactive: "No",
+  active: 'Yes',
+  inactive: 'No',
 });
+```
+
+```
+◇  Deploy to production?
+│  Yes / No
+└
 ```
 
 Keys: `Left/Right` or `h/l` to toggle, `y/n` shortcuts, `Enter` to submit.
 
-### `input(config): Promise<string | Cancel>`
+### input
 
-Free text with validation.
+Free text with optional validation.
 
 ```typescript
 const name = await input({
-  message: "Project name?",
-  placeholder: "my-app",
-  initialValue: "",
-  validate: (v) => (v.length > 0 ? true : "Required"),
+  message: 'Project name?',
+  placeholder: 'my-app',
+  validate: (v) => (v.length > 0 ? true : 'Required'),
 });
+```
+
+```
+◇  Project name?
+│  my-app█
+└
 ```
 
 Keys: full text editing, `Ctrl+A/E` for home/end, `Ctrl+U` to clear, `Ctrl+W` to delete word.
 
-### `multiselect<T>(config): Promise<T[] | Cancel>`
+### multiselect
 
 Pick multiple options.
 
 ```typescript
 const features = await multiselect({
-  message: "Features?",
+  message: 'Select features',
   options: [
-    { value: "auth", label: "Authentication" },
-    { value: "db", label: "Database" },
-    { value: "api", label: "API Layer" },
+    { value: 'ts', label: 'TypeScript' },
+    { value: 'lint', label: 'ESLint' },
+    { value: 'test', label: 'Vitest' },
+    { value: 'ci', label: 'GitHub Actions' },
   ],
-  initialValues: ["auth"],
+  initialValues: ['ts'],
   required: true,
-  maxItems: 8,
 });
+```
+
+```
+◇  Select features
+│  >■ TypeScript
+│   □ ESLint
+│   ■ Vitest
+│   □ GitHub Actions
+└
 ```
 
 Keys: `Space` to toggle, `a` to toggle all, `Enter` to submit.
 
-### `password(config): Promise<string | Cancel>`
+### password
 
 Masked text input.
 
 ```typescript
 const secret = await password({
-  message: "API key?",
-  mask: "•",
-  validate: (v) => (v.length > 0 ? true : "Required"),
+  message: 'API key?',
+  mask: '•',
+  validate: (v) => (v.length > 0 ? true : 'Required'),
 });
 ```
 
-Keys: type to append, `Backspace` to delete, `Enter` to submit.
+```
+◇  Enter your API key
+│  ••••••••
+└
+```
 
-### `search<T>(config): Promise<T | Cancel>`
+### number
+
+Numeric input with optional min/max/step.
+
+```typescript
+const port = await number({
+  message: 'Port number?',
+  initialValue: 3000,
+  min: 1,
+  max: 65535,
+  step: 1,
+});
+```
+
+```
+◇  Port number?
+│  3000█
+└
+```
+
+Keys: `Up/Down` to increment/decrement by step, `Enter` to submit.
+
+### search
 
 Type-to-filter selection. Filters by label and hint, case-insensitive.
 
 ```typescript
 const tz = await search({
-  message: "Timezone?",
+  message: 'Select timezone',
   options: [
-    { value: "utc", label: "UTC", hint: "+00:00" },
-    { value: "est", label: "Eastern", hint: "-05:00" },
-    { value: "pst", label: "Pacific", hint: "-08:00" },
+    { value: 'utc', label: 'UTC', hint: '+00:00' },
+    { value: 'est', label: 'Eastern', hint: '-05:00' },
+    { value: 'pst', label: 'Pacific', hint: '-08:00' },
   ],
-  placeholder: "Type to filter...",
+  placeholder: 'Type to filter...',
   maxItems: 5,
 });
 ```
 
-Keys: type to filter, `Up/Down` to navigate results, `Enter` to submit.
-
-## Composition
-
-### `group(prompts, options?): Promise<T>`
-
-Chain multiple prompts. Each prompt receives previous results. Stops on cancel.
-
-```typescript
-const answers = await group({
-  name: () => input({ message: "Name?" }),
-  confirm: ({ results }) =>
-    confirm({ message: `Welcome ${results.name}?` }),
-});
+```
+◇  Select timezone
+│  pac
+│  ◉ Pacific (UTC-8)
+│  ○ Asia/Pacific
+└
 ```
 
-Options: `{ onCancel: () => void }` - called when any prompt is cancelled.
+Keys: type to filter, `Up/Down` to navigate, `Enter` to submit.
 
 ## Display
 
-### `spinner(config?): Spinner`
+### spinner
 
 Animated spinner for async operations.
 
 ```typescript
 const s = spinner();
-s.start("Installing dependencies...");
-// ... async work
-s.message("Compiling...");
+s.start('Installing dependencies...');
+// ... do work
+s.message('Compiling...');
 // ... more work
-s.stop("Done");        // success (green ◆)
-s.stop("Failed", 1);  // error (red ▲)
+s.stop('Installed 142 packages');    // success (green ◆)
+s.stop('Failed', 1);                // error (red ▲)
 ```
 
-### `intro(title?)`
+```
+◒  Installing dependencies...
+◆  Installed 142 packages
+```
 
-Start marker with optional title.
+### progress
+
+Determinate progress bar.
 
 ```typescript
-intro("my-cli v1.0");
+const p = progress();
+p.start('Downloading...');
+p.update(30, 'Downloading...');
+p.update(60, 'Downloading...');
+p.update(100, 'Downloading...');
+p.stop('Download complete');
 ```
 
-### `outro(message?)`
+```
+████████████░░░░░░░░  Downloading...  60%
+◆  Download complete
+```
 
-End marker with optional message.
+### tasks
+
+Run multiple tasks with status tracking.
 
 ```typescript
-outro("All done!");
+const result = await tasks([
+  {
+    title: 'Install dependencies',
+    task: async () => { /* ... */ },
+  },
+  {
+    title: 'Generate types',
+    task: async (ctx, update) => {
+      update('Generating schema...');
+      /* ... */
+    },
+  },
+  {
+    title: 'Run tests',
+    task: async () => { /* ... */ },
+    enabled: false, // skip this task
+  },
+], { concurrent: false });
 ```
 
-### `note(message, title?)`
+```
+│
+◆  Install dependencies
+◒  Generating schema...
+○  Run tests
+│
+```
+
+### note
 
 Boxed note with optional title.
 
 ```typescript
-note("Run `npm start` to begin", "Next steps");
+note('cd my-app\nnpm run dev', 'Next steps');
 ```
 
-### `log.info / success / warn / error / step / message`
+```
+│
+│  ────────────────
+│  Next steps
+│  cd my-app
+│  npm run dev
+│  ────────────────
+```
+
+### log
 
 Structured log lines with icons.
 
 ```typescript
-log.info("Connected to database");
-log.success("Build complete");
-log.warn("Deprecated config detected");
-log.error("Connection failed");
-log.step("Running migrations");
-log.message("Plain text with bar");
+log.info('Connected to database');     // ⓘ  blue
+log.success('Build complete');         // ◆  green
+log.warn('Deprecated config');         // ▲  yellow
+log.error('Connection failed');        // ▲  red
+log.step('Running migrations');        // │  gray
 ```
 
-## Cancel Handling
+### intro / outro
 
-### `isCancel(value): boolean`
-
-Check if the user cancelled a prompt (Ctrl+C or Escape).
+Session markers that bracket your CLI flow.
 
 ```typescript
-const result = await select({ ... });
+intro('my-cli v1.0');
+// ... prompts and work
+outro('All done!');
+```
+
+```
+┌  my-cli v1.0
+│
+│  ... your prompts here ...
+│
+└  All done!
+```
+
+## Composition
+
+### group
+
+Chain prompts together. Each step receives previous results. Stops on cancel.
+
+```typescript
+const answers = await group({
+  name: () => input({ message: 'Project name?' }),
+  framework: () => select({
+    message: 'Framework?',
+    options: [
+      { value: 'next', label: 'Next.js' },
+      { value: 'hono', label: 'Hono' },
+    ],
+  }),
+  confirm: ({ results }) =>
+    confirm({ message: `Create ${results.name} with ${results.framework}?` }),
+}, {
+  onCancel: () => process.exit(0),
+});
+```
+
+## Theming
+
+One line. Any color. Flows through every prompt, spinner, and focus indicator.
+
+```typescript
+import { setTheme } from 'termprompt';
+
+setTheme({ accent: '#7c3aed' });  // hex
+setTheme({ accent: 'cyan' });     // named color
+setTheme({ accent: (text) => `\x1b[35m${text}\x1b[0m` }); // custom function
+```
+
+Works with chalk, picocolors, or raw ANSI. The accent color is used for active prompt indicators (`◇`), focus states, and interactive highlights.
+
+## Cancel handling
+
+Every prompt returns `T | Cancel`. Use `isCancel()` to check.
+
+```typescript
+import { select, isCancel } from 'termprompt';
+
+const result = await select({
+  message: 'Pick one',
+  options: [{ value: 'a', label: 'A' }],
+});
+
 if (isCancel(result)) {
-  console.log("Cancelled");
+  console.log('User cancelled');
   process.exit(0);
 }
+
+// result is narrowed to T here
 ```
+
+`Ctrl+C` or `Escape` triggers cancellation. With `group()`, cancelling any prompt cancels the entire group.
 
 ## OSC 7770
 
-Every prompt emits an [OSC 7770](./PROTOCOL.md) escape sequence with a JSON payload describing the prompt structure. Terminal hosts that support OSC 7770 can intercept it and render native UI.
+Every prompt, spinner, progress bar, and log message emits an [OSC 7770](./SPEC.md) escape sequence with a JSON payload describing the structured data:
 
-This is transparent to the application. No configuration needed. The prompt library handles everything.
+```
+ESC ] 7770 ; {"v":1,"type":"select","id":"...","message":"Pick a framework","options":[...]} BEL
+```
 
-See [PROTOCOL.md](./PROTOCOL.md) for the full specification.
+Terminal hosts (web terminals, IDE terminals, multiplexers) can register an OSC handler for code `7770`, intercept the payload, and render native UI (dropdowns, modals, checkboxes, progress bars) instead of the TUI. When the user makes a selection, the host writes a resolve message back to PTY stdin.
+
+Terminals that don't support OSC 7770 silently ignore the sequences per ECMA-48. The TUI works exactly as it would without the protocol.
+
+Your code doesn't change. No feature flags. No configuration. The library handles everything.
+
+See [SPEC.md](./SPEC.md) for the full protocol specification.
 
 ## License
 

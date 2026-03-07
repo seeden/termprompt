@@ -413,6 +413,10 @@ Your code doesn't change. No feature flags. No configuration. The library handle
 
 See [SPEC.md](./SPEC.md) for the full protocol specification.
 
+## Documentation
+
+Full documentation at [seeden.github.io/termprompt](https://seeden.github.io/termprompt/).
+
 ## License
 
 MIT

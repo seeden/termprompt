@@ -14,6 +14,7 @@ import { BrowserFrame, NativeSelect } from '@/components/SmartTerminal';
 import ThemeToggle from '@/components/ThemeToggle';
 import { ThemingDemo } from '@/components/ThemingDemo';
 import { GradientSection } from '@/components/GradientSections';
+import Testimonials from '@/components/Testimonials';
 
 export const metadata = {
   title: 'termprompt - Beautiful terminal prompts for Node.js',
@@ -668,6 +669,39 @@ export default function HomePage() {
             <Code code={BASIC_EXAMPLE} label="Full example" />
           </div>
         </GradientSection>
+
+        {/* ━━ Testimonials ━━ */}
+        <section className="border-t border-fd-border/40 py-20 md:py-24">
+          <div className="mx-auto max-w-7xl px-6">
+            <p className="mb-2 font-[JetBrains_Mono,monospace] text-[11px] font-medium uppercase tracking-[0.2em] text-fd-primary">
+              Community
+            </p>
+            <h2 className="mb-4 max-w-md font-['DM_Sans',sans-serif] text-2xl font-extrabold tracking-tight text-fd-foreground md:text-3xl">
+              Built with termprompt
+            </h2>
+            <p className="mb-10 max-w-lg text-sm leading-relaxed text-fd-muted-foreground">
+              Companies and developers shipping with termprompt in production. Get your logo and a dofollow backlink
+              on this page.
+            </p>
+
+            {/* Trusted by */}
+            <div className="mb-12 flex flex-wrap items-center gap-8">
+              <p className="font-[JetBrains_Mono,monospace] text-[11px] font-medium uppercase tracking-[0.2em] text-fd-muted-foreground">
+                Trusted by
+              </p>
+              <a
+                href="https://anyterm.dev"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-[JetBrains_Mono,monospace] text-lg font-bold tracking-tight text-fd-foreground opacity-70 transition-opacity hover:opacity-100"
+              >
+                Anyterm
+              </a>
+            </div>
+
+            <Testimonials />
+          </div>
+        </section>
 
         {/* ━━ Footer ━━ */}
         <section className="border-t border-fd-border pt-16 pb-12">

@@ -2,7 +2,9 @@
 
 Beautiful terminal prompts for Node.js. Zero dependencies.
 
-Every prompt emits [OSC 7770](./SPEC.md) escape sequences alongside the TUI. Smart terminals (web terminals, IDE terminals, multiplexers) can intercept the structured data and render native UI. Standard terminals ignore the sequences and show the TUI. Zero config, zero degradation.
+Every prompt emits [OSC 7770](https://github.com/seeden/termprompt/blob/main/SPEC.md) escape sequences alongside the TUI. Smart terminals (web terminals, IDE terminals, multiplexers) can intercept the structured data and render native UI. Standard terminals ignore the sequences and show the TUI. Zero config, zero degradation.
+
+**[Documentation](https://seeden.github.io/termprompt/)**
 
 ```
 ┌  create-app
@@ -399,7 +401,7 @@ if (isCancel(result)) {
 
 ## OSC 7770
 
-Every prompt, spinner, progress bar, and log message emits an [OSC 7770](./SPEC.md) escape sequence with a JSON payload describing the structured data:
+Every prompt, spinner, progress bar, and log message emits an [OSC 7770](https://github.com/seeden/termprompt/blob/main/SPEC.md) escape sequence with a JSON payload describing the structured data:
 
 ```
 ESC ] 7770 ; {"v":1,"type":"select","id":"...","message":"Pick a framework","options":[...]} BEL
@@ -411,11 +413,7 @@ Terminals that don't support OSC 7770 silently ignore the sequences per ECMA-48.
 
 Your code doesn't change. No feature flags. No configuration. The library handles everything.
 
-See [SPEC.md](./SPEC.md) for the full protocol specification.
-
-## Documentation
-
-Full documentation at [seeden.github.io/termprompt](https://seeden.github.io/termprompt/).
+See [SPEC.md](https://github.com/seeden/termprompt/blob/main/SPEC.md) for the full protocol specification.
 
 ## License
 

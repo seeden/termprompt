@@ -1,0 +1,97 @@
+---
+title: Spinner
+description: Animated loading indicator for async operations.
+---
+
+import { Terminal, Cyan, Green, Red, Gray, Dim, Bold, Line } from '@/components/Terminal';
+
+## Preview
+
+<div className="not-prose mb-8 grid gap-4 md:grid-cols-2">
+
+<div>
+<p className="mb-2 text-sm text-fd-muted-foreground">Running</p>
+<Terminal title="spinner">
+<Line><Cyan>◒</Cyan> Installing dependencies...</Line>
+</Terminal>
+</div>
+
+<div>
+<p className="mb-2 text-sm text-fd-muted-foreground">Completed</p>
+<Terminal title="spinner">
+<Line><Green>◆</Green> Dependencies installed.</Line>
+</Terminal>
+</div>
+
+</div>
+
+## Usage
+
+```ts
+import { spinner } from 'termprompt';
+
+const s = spinner();
+
+s.start('Installing dependencies...');
+await install();
+s.stop('Dependencies installed.');
+```
+
+## API
+
+### `spinner(config?)`
+
+Returns a `Spinner` object.
+
+| Config   | Type       | Default          | Description  |
+| -------- | ---------- | ---------------- | ------------ |
+| `output` | `Writable` | `process.stdout` | Output stream|
+
+### Spinner Methods
+
+| Method                          | Description                     |
+| ------------------------------- | ------------------------------- |
+| `start(message: string)`        | Show the spinner with a message |
+| `message(text: string)`         | Update message while spinning   |
+| `stop(message?: string, code?)` | Stop and show final message     |
+
+### Stop Codes
+
+| Code          | Icon                    |
+| ------------- | ----------------------- |
+| `0` (default) | Green diamond (success) |
+| Non-zero      | Red triangle (error)    |
+
+```ts
+const s = spinner();
+s.start('Deploying...');
+
+try {
+  await deploy();
+  s.stop('Deployed successfully.');
+} catch (err) {
+  s.stop('Deploy failed.', 1);
+}
+```
+
+<div className="not-prose mt-4">
+<Terminal title="error stop code">
+<Line><Red>▲</Red> Deploy failed.</Line>
+</Terminal>
+</div>
+
+## Updating the Message
+
+```ts
+const s = spinner();
+s.start('Downloading...');
+
+s.message('Downloading... 50%');
+s.message('Downloading... 100%');
+
+s.stop('Download complete.');
+```
+
+## Animation
+
+The spinner cycles through `◒ ◐ ◓ ◑` at 80ms intervals. The animation character uses your [accent color](/docs/theming).

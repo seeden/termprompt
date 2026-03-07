@@ -1,0 +1,134 @@
+---
+title: termprompt
+description: Beautiful terminal prompts for Node.js. Zero dependencies, brand theming, OSC 7770 protocol support.
+---
+
+import { Card, Cards } from 'fumadocs-ui/components/card';
+import { Terminal, Cyan, Green, Gray, Dim, Bold, Line } from '@/components/Terminal';
+import { BrowserFrame, NativeSelect } from '@/components/SmartTerminal';
+
+# termprompt
+
+Beautiful terminal prompts for Node.js CLIs.
+
+## Why termprompt?
+
+Most prompt libraries are either bloated with dependencies, locked to a fixed look, or abandoned. termprompt gives you polished interactive prompts with zero runtime dependencies, brand theming in one line, and a protocol layer that lets smart terminals render native UI.
+
+| Feature         | termprompt                                        |
+| --------------- | ------------------------------------------------- |
+| Prompts         | select, confirm, input, multiselect, password, search |
+| Display         | intro, outro, spinner, log, note                  |
+| Theming         | `setTheme({ accent: '#7c3aed' })` - hex, RGB, named, or custom function |
+| Dependencies    | Zero. Only Node.js built-ins.                     |
+| TypeScript      | Strict types, generics, typed cancel handling     |
+| Cancel          | Symbol-based. No confusion with falsy values.     |
+| Keyboard        | Arrow keys, vim bindings (j/k/h/l), Ctrl shortcuts |
+| OSC 7770        | Smart terminals can intercept and render native UI |
+| Composition     | `group()` chains prompts with shared state        |
+| Bundle          | Under 10 KB gzipped                               |
+
+## Quick Start
+
+```ts
+import { intro, outro, select, isCancel, log } from 'termprompt';
+
+intro('my-cli');
+
+const lang = await select({
+  message: 'Pick a language',
+  options: [
+    { value: 'ts', label: 'TypeScript' },
+    { value: 'js', label: 'JavaScript' },
+    { value: 'go', label: 'Go' },
+  ],
+});
+
+if (isCancel(lang)) {
+  log.warn('Cancelled.');
+  process.exit(0);
+}
+
+log.success(`Selected: ${lang}`);
+outro('Done.');
+```
+
+## Smart Terminal Hosts
+
+Same code, two experiences. In a standard terminal, users get the text-based TUI. In a smart terminal host (web UI, custom emulator, multiplexer), the host intercepts [OSC 7770](/docs/advanced/osc-protocol) escape sequences and renders native UI instead.
+
+<div className="not-prose grid gap-6 md:grid-cols-2 my-8">
+
+<div>
+<p className="mb-3 text-sm font-medium text-fd-muted-foreground">Standard terminal</p>
+<Terminal title="bash">
+<Line><Gray>┌</Gray> <Bold>create-app</Bold></Line>
+<Line><Gray>│</Gray></Line>
+<Line><Cyan>◇</Cyan> <Bold>Pick a framework</Bold></Line>
+<Line><Gray>│</Gray> <Green>◉</Green> Next.js <Dim>(React SSR)</Dim></Line>
+<Line><Gray>│</Gray> <Dim>○ Hono</Dim> <Dim>(Edge-first)</Dim></Line>
+<Line><Gray>│</Gray> <Dim>○ Astro</Dim> <Dim>(Content-first)</Dim></Line>
+<Line><Gray>└</Gray></Line>
+</Terminal>
+</div>
+
+<div>
+<p className="mb-3 text-sm font-medium text-fd-muted-foreground">Smart terminal host</p>
+<BrowserFrame url="your-terminal.dev">
+<NativeSelect />
+</BrowserFrame>
+</div>
+
+</div>
+
+Your CLI doesn't need to know which one it's running in. Write prompts once, get native UI for free.
+
+## Explore
+
+<Cards>
+  <Card
+    title="Getting Started"
+    description="Install, first prompt, and project setup."
+    href="/docs/getting-started"
+  />
+  <Card
+    title="Theming"
+    description="Brand your prompts with hex, RGB, or any color."
+    href="/docs/theming"
+  />
+  <Card
+    title="Prompts"
+    description="select, confirm, input, multiselect, password, search."
+    href="/docs/prompts"
+  />
+  <Card
+    title="Spinner"
+    description="Animated loading indicator for async operations."
+    href="/docs/display/spinner"
+  />
+  <Card
+    title="Log & Display"
+    description="Structured logging, intro/outro markers."
+    href="/docs/display/log"
+  />
+  <Card
+    title="Note"
+    description="Boxed notes with optional titles."
+    href="/docs/display/note"
+  />
+  <Card
+    title="Group"
+    description="Chain prompts into form-like workflows."
+    href="/docs/composition/group"
+  />
+  <Card
+    title="Cancel Handling"
+    description="Type-safe cancellation with symbol-based checking."
+    href="/docs/advanced/cancel-handling"
+  />
+  <Card
+    title="OSC 7770 Protocol"
+    description="How smart terminals can intercept prompts."
+    href="/docs/advanced/osc-protocol"
+  />
+</Cards>

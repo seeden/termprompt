@@ -1,0 +1,13 @@
+{
+  "title": "Prompts",
+  "pages": [
+    "index",
+    "select",
+    "confirm",
+    "input",
+    "multiselect",
+    "password",
+    "search",
+    "number"
+  ]
+}

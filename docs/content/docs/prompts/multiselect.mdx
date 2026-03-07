@@ -1,0 +1,98 @@
+---
+title: multiselect
+description: Pick multiple options from a list.
+---
+
+import { Terminal, Cyan, Green, Gray, Dim, Bold, Line } from '@/components/Terminal';
+
+## Preview
+
+<div className="not-prose mb-8 grid gap-4 md:grid-cols-2">
+
+<div>
+<p className="mb-2 text-sm text-fd-muted-foreground">Selecting</p>
+<Terminal title="multiselect">
+<Line><Cyan>◇</Cyan> <Bold>Select features</Bold></Line>
+<Line><Gray>│</Gray> <Cyan>{'>'}</Cyan><Green>■</Green> TypeScript</Line>
+<Line><Gray>│</Gray> {'  '}<Dim>□</Dim> <Dim>ESLint</Dim></Line>
+<Line><Gray>│</Gray> {'  '}<Green>■</Green> Vitest</Line>
+<Line><Gray>│</Gray> {'  '}<Dim>□</Dim> <Dim>GitHub Actions</Dim></Line>
+<Line><Gray>└</Gray></Line>
+</Terminal>
+</div>
+
+<div>
+<p className="mb-2 text-sm text-fd-muted-foreground">After submit</p>
+<Terminal title="multiselect">
+<Line><Green>◆</Green> <Bold>Select features</Bold></Line>
+<Line><Gray>│</Gray> <Dim>TypeScript, Vitest</Dim></Line>
+</Terminal>
+</div>
+
+</div>
+
+## Usage
+
+```ts
+import { multiselect, isCancel } from 'termprompt';
+
+const features = await multiselect({
+  message: 'Select features',
+  options: [
+    { value: 'ts', label: 'TypeScript' },
+    { value: 'lint', label: 'ESLint' },
+    { value: 'test', label: 'Vitest' },
+    { value: 'ci', label: 'GitHub Actions' },
+  ],
+});
+
+if (isCancel(features)) process.exit(0);
+console.log(features); // ['ts', 'lint', ...]
+```
+
+## Props
+
+| Prop            | Type          | Default      | Description                    |
+| --------------- | ------------- | ------------ | ------------------------------ |
+| `message`       | `string`      | **required** | Question text                  |
+| `options`       | `Option<T>[]` | **required** | List of choices                |
+| `initialValues` | `T[]`         | `[]`         | Pre-selected values            |
+| `required`      | `boolean`     | `true`       | Require at least one selection |
+| `maxItems`      | `number`      | `10`         | Visible items before scrolling |
+
+## Pre-selected Values
+
+```ts
+const extras = await multiselect({
+  message: 'Extras',
+  options: [
+    { value: 'ts', label: 'TypeScript' },
+    { value: 'lint', label: 'ESLint' },
+    { value: 'test', label: 'Vitest' },
+  ],
+  initialValues: ['ts', 'lint'],
+});
+```
+
+## Optional Selection
+
+Set `required: false` to allow submitting with no selections.
+
+```ts
+const extras = await multiselect({
+  message: 'Optional extras',
+  options: [...],
+  required: false,
+});
+```
+
+## Keyboard
+
+| Key          | Action         |
+| ------------ | -------------- |
+| `Up` / `k`   | Move up        |
+| `Down` / `j` | Move down      |
+| `Space`      | Toggle current |
+| `a`          | Toggle all     |
+| `Enter`      | Submit         |
+| `Esc`        | Cancel         |

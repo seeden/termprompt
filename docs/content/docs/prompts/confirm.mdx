@@ -1,0 +1,77 @@
+---
+title: confirm
+description: Yes or no question.
+---
+
+import { Terminal, Cyan, Green, Gray, Dim, Bold, Line } from '@/components/Terminal';
+
+## Preview
+
+<div className="not-prose mb-8 grid gap-4 md:grid-cols-2">
+
+<div>
+<p className="mb-2 text-sm text-fd-muted-foreground">Active state (Yes focused)</p>
+<Terminal title="confirm">
+<Line><Cyan>◇</Cyan> <Bold>Deploy to production?</Bold></Line>
+<Line><Gray>│</Gray> <Cyan><u>Yes</u></Cyan> / <Dim>No</Dim></Line>
+<Line><Gray>└</Gray></Line>
+</Terminal>
+</div>
+
+<div>
+<p className="mb-2 text-sm text-fd-muted-foreground">After submit</p>
+<Terminal title="confirm">
+<Line><Green>◆</Green> <Bold>Deploy to production?</Bold></Line>
+<Line><Gray>│</Gray> <Dim>Yes</Dim></Line>
+</Terminal>
+</div>
+
+</div>
+
+## Usage
+
+```ts
+import { confirm, isCancel } from 'termprompt';
+
+const shouldContinue = await confirm({
+  message: 'Deploy to production?',
+});
+
+if (isCancel(shouldContinue)) process.exit(0);
+
+if (shouldContinue) {
+  console.log('Deploying...');
+}
+```
+
+## Props
+
+| Prop           | Type      | Default      | Description                |
+| -------------- | --------- | ------------ | -------------------------- |
+| `message`      | `string`  | **required** | Question text              |
+| `initialValue` | `boolean` | `false`      | Pre-selected value         |
+| `active`       | `string`  | `"Yes"`      | Label for the true option  |
+| `inactive`     | `string`  | `"No"`       | Label for the false option |
+
+## Custom Labels
+
+```ts
+const gitInit = await confirm({
+  message: 'Initialize a git repository?',
+  active: 'Yeah',
+  inactive: 'Nah',
+  initialValue: true,
+});
+```
+
+## Keyboard
+
+| Key            | Action     |
+| -------------- | ---------- |
+| `Left` / `h`   | Toggle     |
+| `Right` / `l`  | Toggle     |
+| `Tab`          | Toggle     |
+| `y` / `Y`      | Set to yes |
+| `n` / `N`      | Set to no  |
+| `Enter`        | Submit     |
+| `Esc`          | Cancel     |

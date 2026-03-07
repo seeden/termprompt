@@ -1,0 +1,82 @@
+---
+title: search
+description: Type-to-filter select prompt.
+---
+
+import { Terminal, Cyan, Green, Gray, Dim, Bold, Line } from '@/components/Terminal';
+
+## Preview
+
+<div className="not-prose mb-8 grid gap-4 md:grid-cols-2">
+
+<div>
+<p className="mb-2 text-sm text-fd-muted-foreground">Filtering</p>
+<Terminal title="search">
+<Line><Cyan>◇</Cyan> <Bold>Select timezone</Bold></Line>
+<Line><Gray>│</Gray> pac</Line>
+<Line><Gray>│</Gray> <Green>◉</Green> Pacific <Dim>(UTC-8)</Dim></Line>
+<Line><Gray>│</Gray> <Dim>○ Asia/Pacific</Dim></Line>
+<Line><Gray>└</Gray></Line>
+</Terminal>
+</div>
+
+<div>
+<p className="mb-2 text-sm text-fd-muted-foreground">After submit</p>
+<Terminal title="search">
+<Line><Green>◆</Green> <Bold>Select timezone</Bold></Line>
+<Line><Gray>│</Gray> <Dim>Pacific</Dim></Line>
+</Terminal>
+</div>
+
+</div>
+
+## Usage
+
+```ts
+import { search, isCancel } from 'termprompt';
+
+const timezone = await search({
+  message: 'Select timezone',
+  options: [
+    { value: 'utc', label: 'UTC' },
+    { value: 'est', label: 'Eastern', hint: 'UTC-5' },
+    { value: 'pst', label: 'Pacific', hint: 'UTC-8' },
+    { value: 'cet', label: 'Central European', hint: 'UTC+1' },
+    { value: 'jst', label: 'Japan', hint: 'UTC+9' },
+  ],
+});
+
+if (isCancel(timezone)) process.exit(0);
+console.log(timezone);
+```
+
+## Props
+
+| Prop          | Type                | Default      | Description                      |
+| ------------- | ------------------- | ------------ | -------------------------------- |
+| `message`     | `string`            | **required** | Question text                    |
+| `options`     | `SearchOption<T>[]` | **required** | Full list to filter from         |
+| `placeholder` | `string?`           | none         | Gray text when query is empty    |
+| `maxItems`    | `number`            | `10`         | Visible results before scrolling |
+
+### SearchOption
+
+| Field   | Type      | Description                      |
+| ------- | --------- | -------------------------------- |
+| `value` | `T`       | Value returned on selection      |
+| `label` | `string`  | Searchable display text          |
+| `hint`  | `string?` | Also searchable, shown on active |
+
+## How Filtering Works
+
+Case-insensitive search against both `label` and `hint`. Results update on every keystroke and the cursor resets to the first match.
+
+## Keyboard
+
+| Key           | Action          |
+| ------------- | --------------- |
+| Type          | Filter options  |
+| `Up` / `Down` | Navigate results|
+| `Backspace`   | Edit query      |
+| `Enter`       | Submit          |
+| `Esc`         | Cancel          |

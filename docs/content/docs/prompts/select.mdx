@@ -1,0 +1,103 @@
+---
+title: select
+description: Pick one option from a list.
+---
+
+import { Terminal, Cyan, Green, Gray, Dim, Bold, Line } from '@/components/Terminal';
+
+## Preview
+
+<div className="not-prose mb-8 grid gap-4 md:grid-cols-2">
+
+<div>
+<p className="mb-2 text-sm text-fd-muted-foreground">Active state</p>
+<Terminal title="select">
+<Line><Cyan>◇</Cyan> <Bold>Pick a framework</Bold></Line>
+<Line><Gray>│</Gray> <Green>◉</Green> Next.js <Dim>(React SSR)</Dim></Line>
+<Line><Gray>│</Gray> <Dim>○ Hono</Dim></Line>
+<Line><Gray>│</Gray> <Dim>○ Astro</Dim></Line>
+<Line><Gray>└</Gray></Line>
+</Terminal>
+</div>
+
+<div>
+<p className="mb-2 text-sm text-fd-muted-foreground">After submit</p>
+<Terminal title="select">
+<Line><Green>◆</Green> <Bold>Pick a framework</Bold></Line>
+<Line><Gray>│</Gray> <Dim>Next.js</Dim></Line>
+</Terminal>
+</div>
+
+</div>
+
+## Usage
+
+```ts
+import { select, isCancel } from 'termprompt';
+
+const framework = await select({
+  message: 'Pick a framework',
+  options: [
+    { value: 'next', label: 'Next.js', hint: 'React SSR' },
+    { value: 'hono', label: 'Hono', hint: 'Edge-first' },
+    { value: 'astro', label: 'Astro', hint: 'Content sites' },
+  ],
+});
+
+if (isCancel(framework)) process.exit(0);
+console.log(framework); // 'next' | 'hono' | 'astro'
+```
+
+## Props
+
+| Prop           | Type          | Default      | Description                    |
+| -------------- | ------------- | ------------ | ------------------------------ |
+| `message`      | `string`      | **required** | Question text                  |
+| `options`      | `Option<T>[]` | **required** | List of choices                |
+| `initialValue` | `T`           | first option | Pre-selected value             |
+| `maxItems`     | `number`      | `10`         | Visible items before scrolling |
+
+### Option
+
+| Field      | Type       | Description                               |
+| ---------- | ---------- | ----------------------------------------- |
+| `value`    | `T`        | The value returned on selection           |
+| `label`    | `string`   | Display text                              |
+| `hint`     | `string?`  | Gray text shown next to the active option |
+| `disabled` | `boolean?` | Grayed out, cannot be selected            |
+
+## Disabled Options
+
+```ts
+const db = await select({
+  message: 'Database',
+  options: [
+    { value: 'pg', label: 'PostgreSQL' },
+    { value: 'mysql', label: 'MySQL', disabled: true },
+    { value: 'sqlite', label: 'SQLite' },
+  ],
+});
+```
+
+<div className="not-prose mt-4">
+<Terminal title="disabled option">
+<Line><Cyan>◇</Cyan> <Bold>Database</Bold></Line>
+<Line><Gray>│</Gray> <Green>◉</Green> PostgreSQL</Line>
+<Line><Gray>│</Gray> <Dim>○ <s>MySQL</s> (disabled)</Dim></Line>
+<Line><Gray>│</Gray> <Dim>○ SQLite</Dim></Line>
+<Line><Gray>└</Gray></Line>
+</Terminal>
+</div>
+
+## Keyboard
+
+| Key          | Action    |
+| ------------ | --------- |
+| `Up` / `k`   | Move up   |
+| `Down` / `j` | Move down |
+| `Enter`      | Submit    |
+| `Esc`        | Cancel    |
+
+## Scrolling
+
+When the list is longer than `maxItems`, the viewport scrolls automatically. Ellipsis indicators appear at the top or bottom when more items exist.

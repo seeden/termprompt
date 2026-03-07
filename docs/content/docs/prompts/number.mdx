@@ -1,0 +1,102 @@
+---
+title: number
+description: Numeric input with validation, min/max bounds, and step controls.
+---
+
+import { Terminal, Cyan, Yellow, Green, Gray, Dim, Bold, Inv, Line } from '@/components/Terminal';
+
+## Preview
+
+<div className="not-prose mb-8 grid gap-4 md:grid-cols-2">
+
+<div>
+<p className="mb-2 text-sm text-fd-muted-foreground">Typing</p>
+<Terminal title="number">
+<Line><Cyan>◇</Cyan> <Bold>Port number?</Bold></Line>
+<Line><Gray>│</Gray> 808<Inv>0</Inv></Line>
+<Line><Gray>└</Gray></Line>
+</Terminal>
+</div>
+
+<div>
+<p className="mb-2 text-sm text-fd-muted-foreground">Validation error</p>
+<Terminal title="number">
+<Line><Yellow>▲</Yellow> <Bold>Port number?</Bold></Line>
+<Line><Gray>│</Gray> 99999<Inv> </Inv></Line>
+<Line><Yellow>▲</Yellow> <Yellow>Must be at most 65535.</Yellow></Line>
+</Terminal>
+</div>
+
+</div>
+
+## Usage
+
+```ts
+import { number, isCancel } from 'termprompt';
+
+const port = await number({
+  message: 'Port number?',
+  min: 1,
+  max: 65535,
+});
+
+if (isCancel(port)) process.exit(0);
+console.log(port); // number
+```
+
+## Props
+
+| Prop           | Type                                 | Default      | Description                       |
+| -------------- | ------------------------------------ | ------------ | --------------------------------- |
+| `message`      | `string`                             | **required** | Question text                     |
+| `min`          | `number?`                            | none         | Minimum allowed value             |
+| `max`          | `number?`                            | none         | Maximum allowed value             |
+| `step`         | `number`                             | `1`          | Increment/decrement step          |
+| `initialValue` | `number?`                            | none         | Pre-filled value                  |
+| `placeholder`  | `string?`                            | none         | Gray text shown when empty        |
+| `validate`     | `(value: number) => true \| string`  | none         | Return `true` or an error message |
+
+## Step Controls
+
+Use Up/Down arrow keys to increment or decrement by the step value. The value is clamped to min/max bounds.
+
+```ts
+const quantity = await number({
+  message: 'How many?',
+  min: 1,
+  max: 100,
+  step: 5,
+  initialValue: 10,
+});
+```
+
+## Validation
+
+Built-in validation checks min/max bounds on submit. You can add custom validation on top.
+
+```ts
+const even = await number({
+  message: 'Enter an even number',
+  validate(value) {
+    if (value % 2 !== 0) return 'Must be even';
+    return true;
+  },
+});
+```
+
+## Keyboard
+
+| Key                | Action              |
+| ------------------ | ------------------- |
+| `0-9`, `-`, `.`    | Type digits         |
+| `Up`               | Increment by step   |
+| `Down`             | Decrement by step   |
+| `Left` / `Right`   | Move cursor         |
+| `Home` / `Ctrl+A`  | Go to start         |
+| `End` / `Ctrl+E`   | Go to end           |
+| `Ctrl+U`           | Clear line          |
+| `Ctrl+W`           | Delete word back    |
+| `Backspace`        | Delete character    |
+| `Delete`           | Delete forward      |
+| `Enter`            | Submit              |
+| `Esc`              | Cancel              |

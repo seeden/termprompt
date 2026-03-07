@@ -1,0 +1,89 @@
+---
+title: Progress
+description: Determinate progress bar for operations with known completion percentage.
+---
+
+import { Terminal, Cyan, Green, Red, Gray, Dim, Bold, Line } from '@/components/Terminal';
+
+## Preview
+
+<div className="not-prose mb-8 grid gap-4 md:grid-cols-2">
+
+<div>
+<p className="mb-2 text-sm text-fd-muted-foreground">In progress</p>
+<Terminal title="progress">
+<Line><Cyan>{'████████████░░░░░░░░'}</Cyan> Downloading... <Dim>60%</Dim></Line>
+</Terminal>
+</div>
+
+<div>
+<p className="mb-2 text-sm text-fd-muted-foreground">Completed</p>
+<Terminal title="progress">
+<Line><Green>◆</Green> Download complete.</Line>
+</Terminal>
+</div>
+
+</div>
+
+## Usage
+
+```ts
+import { progress } from 'termprompt';
+
+const p = progress();
+
+p.start('Downloading...');
+p.update(25);
+p.update(50, 'Downloading... halfway');
+p.update(100);
+p.stop('Download complete.');
+```
+
+## API
+
+### `progress(config?)`
+
+Returns a `Progress` object.
+
+| Config   | Type       | Default          | Description   |
+| -------- | ---------- | ---------------- | ------------- |
+| `output` | `Writable` | `process.stdout` | Output stream |
+
+### Progress Methods
+
+| Method                              | Description                               |
+| ----------------------------------- | ----------------------------------------- |
+| `start(message: string)`            | Show the progress bar at 0%               |
+| `update(percent: number, message?)` | Update percentage (0-100) and optionally message |
+| `stop(message?: string, code?)`     | Stop and show final message               |
+
+### Stop Codes
+
+| Code          | Icon                    |
+| ------------- | ----------------------- |
+| `0` (default) | Green diamond (success) |
+| Non-zero      | Red triangle (error)    |
+
+## Error Handling
+
+```ts
+const p = progress();
+p.start('Uploading...');
+
+try {
+  await upload((pct) => p.update(pct));
+  p.stop('Upload complete.');
+} catch (err) {
+  p.stop('Upload failed.', 1);
+}
+```
+
+<div className="not-prose mt-4">
+<Terminal title="error stop code">
+<Line><Red>▲</Red> Upload failed.</Line>
+</Terminal>
+</div>
+
+## Bar Rendering
+
+The bar is 20 characters wide using filled (`█`) and empty (`░`) blocks. The fill amount is proportional to the percentage. The bar color uses your [accent color](/docs/theming).

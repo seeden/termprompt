@@ -1,0 +1,116 @@
+---
+title: Cancel Handling
+description: How termprompt handles Esc and Ctrl+C with type-safe cancellation.
+---
+
+import { Terminal, Cyan, Green, Yellow, Gray, Dim, Bold, Line } from '@/components/Terminal';
+
+## Preview
+
+<div className="not-prose mb-8 grid gap-4 md:grid-cols-2">
+
+<div>
+<p className="mb-2 text-sm text-fd-muted-foreground">Active prompt</p>
+<Terminal title="before cancel">
+<Line><Cyan>◇</Cyan> <Bold>Project name?</Bold></Line>
+<Line><Gray>│</Gray> my-a<span className="bg-[#c9d1d9] text-[#0c1017]"> </span></Line>
+<Line><Gray>└</Gray></Line>
+</Terminal>
+</div>
+
+<div>
+<p className="mb-2 text-sm text-fd-muted-foreground">After Esc or Ctrl+C</p>
+<Terminal title="cancelled">
+<Line><Yellow>■</Yellow> <Bold>Project name?</Bold></Line>
+<Line><Gray>│</Gray> <Dim><s>cancelled</s></Dim></Line>
+</Terminal>
+</div>
+
+</div>
+
+## The Problem
+
+When a user presses `Esc` or `Ctrl+C`, the prompt needs to return something. Returning `null` or `undefined` is ambiguous because those could be valid values. Returning `false` collides with `confirm()` results.
+
+## The Solution
+
+termprompt uses a unique symbol for cancellation. Every prompt returns `T | Cancel`, and you check with `isCancel()`.
+
+```ts
+import { input, isCancel } from 'termprompt';
+
+const name = await input({ message: 'Name?' });
+
+if (isCancel(name)) {
+  // User pressed Esc or Ctrl+C
+  console.log('Bye');
+  process.exit(0);
+}
+
+// TypeScript now knows `name` is a string
+console.log(name.toUpperCase());
+```
+
+## Why a Symbol?
+
+`isCancel()` is a type guard. After the check, TypeScript narrows the type from `string | Cancel` to `string`. Full type safety without casting.
+
+```ts
+const confirmed = await confirm({ message: 'Continue?' });
+
+if (isCancel(confirmed)) {
+  // confirmed is Cancel here
+  process.exit(0);
+}
+
+// confirmed is boolean here, not boolean | Cancel
+if (confirmed) {
+  deploy();
+}
+```
+
+## The CANCEL Symbol
+
+You can also import the symbol directly for comparisons, though `isCancel()` is preferred.
+
+```ts
+import { CANCEL } from 'termprompt';
+import type { Cancel } from 'termprompt';
+
+// These are equivalent:
+if (isCancel(value)) { ... }
+if (value === CANCEL) { ... }
+```
+
+## With group()
+
+When using `group()`, cancellation in any prompt stops the entire chain. Use the `onCancel` callback to handle it.
+
+```ts
+import { group, input, confirm, log } from 'termprompt';
+
+const answers = await group(
+  {
+    name: () => input({ message: 'Name?' }),
+    proceed: () => confirm({ message: 'Continue?' }),
+  },
+  {
+    onCancel() {
+      log.warn('Cancelled.');
+      process.exit(0);
+    },
+  },
+);
+```
+
+<div className="not-prose mt-4">
+
+<Terminal title="group cancelled on second prompt">
+<Line><Green>◆</Green> <Bold>Name?</Bold></Line>
+<Line><Gray>│</Gray> <Dim>my-app</Dim></Line>
+<Line><Yellow>■</Yellow> <Bold>Continue?</Bold></Line>
+<Line><Gray>│</Gray> <Dim><s>cancelled</s></Dim></Line>
+<Line><Yellow>▲</Yellow> <Yellow>Cancelled.</Yellow></Line>
+</Terminal>
+
+</div>

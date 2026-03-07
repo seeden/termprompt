@@ -1,0 +1,95 @@
+---
+title: Prompts
+description: Overview of all 6 interactive prompt types in termprompt.
+---
+
+import { Card, Cards } from 'fumadocs-ui/components/card';
+import { Terminal, Cyan, Green, Gray, Dim, Bold, Inv, Line } from '@/components/Terminal';
+
+# Prompts
+
+termprompt ships 7 interactive prompt types. All return `Promise<T | Cancel>` and support cancellation via `Esc` or `Ctrl+C`.
+
+## At a Glance
+
+<div className="grid gap-4 md:grid-cols-2 not-prose">
+
+<Terminal title="select">
+<Line><Cyan>◇</Cyan> <Bold>Pick a framework</Bold></Line>
+<Line><Gray>│</Gray> <Green>◉</Green> Next.js <Dim>(React SSR)</Dim></Line>
+<Line><Gray>│</Gray> <Dim>○ Hono</Dim></Line>
+<Line><Gray>│</Gray> <Dim>○ Astro</Dim></Line>
+<Line><Gray>└</Gray></Line>
+</Terminal>
+
+<Terminal title="confirm">
+<Line><Cyan>◇</Cyan> <Bold>Deploy to production?</Bold></Line>
+<Line><Gray>│</Gray> <Cyan><u>Yes</u></Cyan> / <Dim>No</Dim></Line>
+<Line><Gray>└</Gray></Line>
+</Terminal>
+
+<Terminal title="input">
+<Line><Cyan>◇</Cyan> <Bold>Project name?</Bold></Line>
+<Line><Gray>│</Gray> my-app<Inv> </Inv></Line>
+<Line><Gray>└</Gray></Line>
+</Terminal>
+
+<Terminal title="multiselect">
+<Line><Cyan>◇</Cyan> <Bold>Select features</Bold></Line>
+<Line><Gray>│</Gray> <Cyan>{'>'}</Cyan><Green>■</Green> TypeScript</Line>
+<Line><Gray>│</Gray> {'  '}<Dim>□</Dim> <Dim>ESLint</Dim></Line>
+<Line><Gray>│</Gray> {'  '}<Green>■</Green> Vitest</Line>
+<Line><Gray>└</Gray></Line>
+</Terminal>
+
+<Terminal title="password">
+<Line><Cyan>◇</Cyan> <Bold>Enter your API key</Bold></Line>
+<Line><Gray>│</Gray> ••••••••</Line>
+<Line><Gray>└</Gray></Line>
+</Terminal>
+
+<Terminal title="search">
+<Line><Cyan>◇</Cyan> <Bold>Select timezone</Bold></Line>
+<Line><Gray>│</Gray> pac</Line>
+<Line><Gray>│</Gray> <Green>◉</Green> Pacific <Dim>(UTC-8)</Dim></Line>
+<Line><Gray>│</Gray> <Dim>○ Asia/Pacific</Dim></Line>
+<Line><Gray>└</Gray></Line>
+</Terminal>
+
+<Terminal title="number">
+<Line><Cyan>◇</Cyan> <Bold>Port number?</Bold></Line>
+<Line><Gray>│</Gray> 8080</Line>
+<Line><Gray>└</Gray></Line>
+</Terminal>
+
+</div>
+
+## Summary
+
+| Prompt        | Returns         | Use case                           |
+| ------------- | --------------- | ---------------------------------- |
+| `select`      | `T`             | Pick one from a list               |
+| `confirm`     | `boolean`       | Yes/no question                    |
+| `input`       | `string`        | Free text with optional validation |
+| `multiselect` | `T[]`           | Pick multiple from a list          |
+| `password`    | `string`        | Masked text input                  |
+| `search`      | `T`             | Type-to-filter select              |
+| `number`      | `number`        | Numeric input with step controls   |
+
+<Cards>
+  <Card title="select" description="Pick one option from a list." href="/docs/prompts/select" />
+  <Card title="confirm" description="Yes or no." href="/docs/prompts/confirm" />
+  <Card title="input" description="Free text entry." href="/docs/prompts/input" />
+  <Card title="multiselect" description="Pick multiple options." href="/docs/prompts/multiselect" />
+  <Card title="password" description="Masked input." href="/docs/prompts/password" />
+  <Card title="search" description="Type-to-filter select." href="/docs/prompts/search" />
+  <Card title="number" description="Numeric input with step controls." href="/docs/prompts/number" />
+</Cards>
+
+## Common Keyboard Shortcuts
+
+| Key         | Action   |
+| ----------- | -------- |
+| `Enter`     | Submit   |
+| `Esc`       | Cancel   |
+| `Ctrl+C`    | Cancel   |

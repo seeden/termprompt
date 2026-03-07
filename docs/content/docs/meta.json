@@ -1,0 +1,16 @@
+{
+  "title": "Documentation",
+  "pages": [
+    "index",
+    "getting-started",
+    "theming",
+    "---Prompts---",
+    "...prompts",
+    "---Display---",
+    "...display",
+    "---Composition---",
+    "...composition",
+    "---Advanced---",
+    "...advanced"
+  ]
+}

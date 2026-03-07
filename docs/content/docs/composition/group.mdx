@@ -1,0 +1,133 @@
+---
+title: group
+description: Chain multiple prompts into a form-like workflow with shared state.
+---
+
+import { Terminal, Cyan, Green, Yellow, Gray, Dim, Bold, Line } from '@/components/Terminal';
+
+## Preview
+
+<div className="not-prose mb-8 grid gap-4 md:grid-cols-2">
+
+<div>
+<p className="mb-2 text-sm text-fd-muted-foreground">In progress (third prompt active)</p>
+<Terminal title="group">
+<Line><Green>◆</Green> <Bold>Project name?</Bold></Line>
+<Line><Gray>│</Gray> <Dim>my-app</Dim></Line>
+<Line><Green>◆</Green> <Bold>Framework?</Bold></Line>
+<Line><Gray>│</Gray> <Dim>Next.js</Dim></Line>
+<Line><Cyan>◇</Cyan> <Bold>Init git for my-app?</Bold></Line>
+<Line><Gray>│</Gray> <Cyan><u>Yes</u></Cyan> / <Dim>No</Dim></Line>
+<Line><Gray>└</Gray></Line>
+</Terminal>
+</div>
+
+<div>
+<p className="mb-2 text-sm text-fd-muted-foreground">All completed</p>
+<Terminal title="group">
+<Line><Green>◆</Green> <Bold>Project name?</Bold></Line>
+<Line><Gray>│</Gray> <Dim>my-app</Dim></Line>
+<Line><Green>◆</Green> <Bold>Framework?</Bold></Line>
+<Line><Gray>│</Gray> <Dim>Next.js</Dim></Line>
+<Line><Green>◆</Green> <Bold>Init git for my-app?</Bold></Line>
+<Line><Gray>│</Gray> <Dim>Yes</Dim></Line>
+</Terminal>
+</div>
+
+</div>
+
+## Usage
+
+```ts
+import { group, select, input, confirm, log } from 'termprompt';
+
+const project = await group({
+  name: () => input({ message: 'Project name?', placeholder: 'my-app' }),
+  framework: () => select({
+    message: 'Framework?',
+    options: [
+      { value: 'next', label: 'Next.js' },
+      { value: 'hono', label: 'Hono' },
+    ],
+  }),
+  git: ({ results }) => confirm({
+    message: `Init git for ${results.name}?`,
+  }),
+});
+
+// project = { name: 'my-app', framework: 'next', git: true }
+```
+
+Each prompt function receives a `results` object with all previous answers. This lets you reference earlier values in later prompts.
+
+## Props
+
+### `group(prompts, options?)`
+
+| Param     | Type             | Description                |
+| --------- | ---------------- | -------------------------- |
+| `prompts` | `GroupConfig<T>` | Object of prompt functions |
+| `options` | `GroupOptions?`  | Optional callbacks         |
+
+### GroupOptions
+
+| Field      | Type         | Description                        |
+| ---------- | ------------ | ---------------------------------- |
+| `onCancel` | `() => void` | Called when any prompt is cancelled |
+
+## Cancel Behavior
+
+If the user cancels any prompt in the group, the chain stops immediately and returns the partial results collected so far.
+
+```ts
+const result = await group(
+  {
+    name: () => input({ message: 'Name?' }),
+    color: () => select({
+      message: 'Color?',
+      options: [
+        { value: 'red', label: 'Red' },
+        { value: 'blue', label: 'Blue' },
+      ],
+    }),
+  },
+  {
+    onCancel() {
+      log.warn('Setup cancelled.');
+      process.exit(0);
+    },
+  },
+);
+```
+
+<div className="not-prose mt-4">
+
+<Terminal title="cancelled group">
+<Line><Green>◆</Green> <Bold>Name?</Bold></Line>
+<Line><Gray>│</Gray> <Dim>my-app</Dim></Line>
+<Line><Yellow>■</Yellow> <Bold>Color?</Bold></Line>
+<Line><Gray>│</Gray> <Dim><s>cancelled</s></Dim></Line>
+<Line><Yellow>▲</Yellow> <Yellow>Setup cancelled.</Yellow></Line>
+</Terminal>
+
+</div>
+
+## Accessing Previous Results
+
+The `results` parameter is a `Partial<T>`, so each value may or may not exist yet depending on where you are in the chain.
+
+```ts
+const answers = await group({
+  database: () => select({
+    message: 'Database?',
+    options: [
+      { value: 'pg', label: 'PostgreSQL' },
+      { value: 'sqlite', label: 'SQLite' },
+    ],
+  }),
+  port: ({ results }) => input({
+    message: 'Port?',
+    placeholder: results.database === 'pg' ? '5432' : '',
+  }),
+});
+```

@@ -1,0 +1,82 @@
+---
+title: input
+description: Free text input with optional validation.
+---
+
+import { Terminal, Cyan, Yellow, Gray, Dim, Bold, Inv, Line } from '@/components/Terminal';
+
+## Preview
+
+<div className="not-prose mb-8 grid gap-4 md:grid-cols-2">
+
+<div>
+<p className="mb-2 text-sm text-fd-muted-foreground">Typing</p>
+<Terminal title="input">
+<Line><Cyan>◇</Cyan> <Bold>Project name?</Bold></Line>
+<Line><Gray>│</Gray> my-app<Inv> </Inv></Line>
+<Line><Gray>└</Gray></Line>
+</Terminal>
+</div>
+
+<div>
+<p className="mb-2 text-sm text-fd-muted-foreground">Validation error</p>
+<Terminal title="input">
+<Line><Yellow>▲</Yellow> <Bold>Project name?</Bold></Line>
+<Line><Gray>│</Gray> <Inv> </Inv></Line>
+<Line><Yellow>▲</Yellow> <Yellow>Name is required</Yellow></Line>
+</Terminal>
+</div>
+
+</div>
+
+## Usage
+
+```ts
+import { input, isCancel } from 'termprompt';
+
+const name = await input({
+  message: 'Project name?',
+  placeholder: 'my-app',
+});
+
+if (isCancel(name)) process.exit(0);
+console.log(name);
+```
+
+## Props
+
+| Prop           | Type                                | Default      | Description                       |
+| -------------- | ----------------------------------- | ------------ | --------------------------------- |
+| `message`      | `string`                            | **required** | Question text                     |
+| `placeholder`  | `string?`                           | none         | Gray text shown when empty        |
+| `initialValue` | `string`                            | `""`         | Pre-filled value                  |
+| `validate`     | `(value: string) => true \| string` | none         | Return `true` or an error message |
+
+## Validation
+
+The validate function runs on submit. If it returns a string, that string is shown as an error and the prompt stays open.
+
+```ts
+const port = await input({
+  message: 'Port number?',
+  validate(value) {
+    const n = Number(value);
+    if (isNaN(n) || n < 1 || n > 65535) return 'Enter a valid port (1-65535)';
+    return true;
+  },
+});
+```
+
+## Keyboard
+
+| Key                | Action           |
+| ------------------ | ---------------- |
+| `Left` / `Right`   | Move cursor      |
+| `Home` / `Ctrl+A`  | Go to start      |
+| `End` / `Ctrl+E`   | Go to end        |
+| `Ctrl+U`           | Clear line       |
+| `Ctrl+W`           | Delete word back |
+| `Backspace`        | Delete character |
+| `Delete`           | Delete forward   |
+| `Enter`            | Submit           |
+| `Esc`              | Cancel           |

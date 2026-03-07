@@ -1,0 +1,10 @@
+{
+  "title": "Display",
+  "pages": [
+    "spinner",
+    "progress",
+    "tasks",
+    "log",
+    "note"
+  ]
+}

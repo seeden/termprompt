@@ -1,0 +1,103 @@
+---
+title: Getting Started
+description: Install termprompt and run your first interactive prompt.
+---
+
+## Installation
+
+```bash
+npm install termprompt
+```
+
+```bash
+pnpm add termprompt
+```
+
+```bash
+yarn add termprompt
+```
+
+Requires Node.js 20 or later. No other dependencies.
+
+## Your First Prompt
+
+```ts
+import { select, isCancel } from 'termprompt';
+
+const color = await select({
+  message: 'Pick a color',
+  options: [
+    { value: 'red', label: 'Red' },
+    { value: 'blue', label: 'Blue' },
+    { value: 'green', label: 'Green' },
+  ],
+});
+
+if (isCancel(color)) {
+  console.log('Cancelled');
+  process.exit(0);
+}
+
+console.log(`You picked: ${color}`);
+```
+
+## Adding Structure
+
+Use `intro` and `outro` to wrap your CLI flow with visual bookends. Use `log` for status messages.
+
+```ts
+import { intro, outro, input, confirm, isCancel, log } from 'termprompt';
+
+intro('create-app');
+
+const name = await input({
+  message: 'Project name?',
+  placeholder: 'my-app',
+});
+
+if (isCancel(name)) process.exit(0);
+
+const git = await confirm({
+  message: 'Initialize git?',
+});
+
+if (isCancel(git)) process.exit(0);
+
+if (git) {
+  log.success('Git initialized.');
+} else {
+  log.info('Skipped git.');
+}
+
+outro('Project created.');
+```
+
+## Brand Theming
+
+Set your accent color once at startup. Every prompt picks it up.
+
+```ts
+import { setTheme } from 'termprompt';
+
+// Hex
+setTheme({ accent: '#7c3aed' });
+
+// RGB
+setTheme({ accent: 'rgb(124, 58, 237)' });
+
+// Named
+setTheme({ accent: 'magenta' });
+
+// Or use chalk, picocolors, etc.
+import chalk from 'chalk';
+setTheme({ accent: chalk.hex('#ff6600') });
+```
+
+See [Theming](/docs/theming) for the full API.
+
+## What's Next
+
+- [Prompts](/docs/prompts) - All 6 interactive prompt types
+- [Theming](/docs/theming) - Customize your brand color
+- [Group](/docs/composition/group) - Chain prompts into workflows
+- [Cancel Handling](/docs/advanced/cancel-handling) - How cancellation works

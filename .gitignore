@@ -1,0 +1,16 @@
+node_modules
+dist
+*.tsbuildinfo
+.DS_Store
+
+# docs build output
+docs/.next
+docs/out
+
+# claude code local config
+.claude/
+.agents/
+
+.source/
+
+skills-lock.json

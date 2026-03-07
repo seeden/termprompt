@@ -1,0 +1,266 @@
+---
+title: OSC 7770 Protocol
+description: How termprompt communicates with smart terminal hosts via escape sequences.
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+
+## Overview
+
+termprompt works as a standard text-based TUI in any terminal. Simultaneously, it emits OSC 7770 escape sequences that smart terminal hosts (custom emulators, web terminals, multiplexers) can intercept and render as native UI.
+
+If nothing intercepts the sequences, the user gets the normal TUI. Zero degradation, zero config.
+
+<Callout title="For terminal host developers">
+  This page documents the wire protocol. Application developers don't need to know any of this. Just use the prompts and they work everywhere.
+</Callout>
+
+<Callout title="Full specification">
+  The formal specification lives at [SPEC.md](https://github.com/nichochar/termprompt/blob/main/SPEC.md) in the repository root. It includes ABNF grammar, RFC 2119 requirement levels, security considerations, and extensibility rules. This page is a practical summary for implementors.
+</Callout>
+
+## Encoding
+
+All messages use the OSC (Operating System Command) escape sequence format:
+
+```
+ESC ] 7770 ; <json> BEL
+```
+
+- `ESC` = `\x1b`
+- `7770` = the OSC code for termprompt
+- `<json>` = a JSON payload
+- `BEL` = `\x07` (or `ST` = `ESC \`)
+
+Both BEL (`\x07`) and ST (`ESC \`) are valid terminators. Implementations must accept both.
+
+## Prompt Announcement
+
+When a prompt starts, termprompt writes a JSON payload to stdout:
+
+```json
+{
+  "v": 1,
+  "type": "select",
+  "id": "550e8400-e29b-41d4-a716-446655440000",
+  "message": "Deploy to which environment?",
+  "options": [
+    { "value": "staging", "label": "Staging", "hint": "Safe to test" },
+    { "value": "prod", "label": "Production", "hint": "Goes live" }
+  ]
+}
+```
+
+### Common Fields
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `v` | `1` | Yes | Protocol version |
+| `type` | `string` | Yes | `"select"`, `"confirm"`, `"input"`, `"multiselect"`, `"spinner"`, `"progress"`, `"tasks"`, `"log"` |
+| `id` | `string` | Yes | Unique prompt ID (UUID recommended) |
+| `message` | `string` | Yes | The question text |
+
+### Type-Specific Fields
+
+| Field | Type | Applicable Types | Description |
+|---|---|---|---|
+| `options` | `array` | select, multiselect | Array of `{ value, label, hint?, disabled? }` |
+| `placeholder` | `string` | input | Placeholder text for input prompts |
+| `initialValue` | `any` | select, confirm, input | Default value |
+| `initialValues` | `array` | multiselect | Default selected values |
+| `active` | `string` | confirm | Label for "true" (default: "Yes") |
+| `inactive` | `string` | confirm | Label for "false" (default: "No") |
+
+## Resolve
+
+Emitted in two scenarios:
+
+1. **By the terminal host** into PTY stdin when the user interacts with the host's native UI
+2. **By the application** to stdout when the TUI prompt resolves normally
+
+```json
+{
+  "v": 1,
+  "type": "resolve",
+  "id": "550e8400-e29b-41d4-a716-446655440000",
+  "value": "staging"
+}
+```
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `v` | `1` | Yes | Protocol version |
+| `type` | `"resolve"` | Yes | Marks this as a resolution |
+| `id` | `string` | Yes | Must match the prompt's ID |
+| `value` | `any` | Yes | The selected value |
+
+### Value Types by Prompt Type
+
+| Prompt Type | Value Type | Example |
+|---|---|---|
+| `select` | `string` | `"staging"` |
+| `confirm` | `boolean` | `true` |
+| `input` | `string` | `"my-project"` |
+| `multiselect` | `string[]` | `["auth", "db"]` |
+
+## Application-Level Prompt Variants
+
+The reference implementation provides higher-level prompt types that map to existing wire types. These do not introduce new OSC `type` values. Terminal hosts see the underlying wire type and can intercept them normally.
+
+| Variant | Wire Type | Description |
+|---|---|---|
+| `password` | `input` | Text input with masked TUI display. The OSC payload is identical to `input`. The masking is purely a TUI rendering concern. |
+| `number` | `input` | Numeric input with validation, min/max bounds, and up/down stepping. The OSC payload is identical to `input`. Numeric constraints are enforced application-side. |
+| `search` | `select` | Filterable select with a text query. The OSC payload is identical to `select` (all options included). Filtering is a TUI-side behavior. |
+
+`group` is a client-side composition utility for sequencing multiple prompts. It does not emit any OSC sequence of its own. Each prompt within a group emits its own independent OSC announcement and resolve.
+
+## Non-Interactive Events
+
+### Spinner
+
+Spinners emit lifecycle events for indeterminate async operations. They do not expect a resolve from the terminal host.
+
+```json
+{ "v": 1, "type": "spinner", "id": "uuid", "status": "start", "message": "Installing..." }
+{ "v": 1, "type": "spinner", "id": "uuid", "status": "update", "message": "Compiling..." }
+{ "v": 1, "type": "spinner", "id": "uuid", "status": "stop", "message": "Done", "code": 0 }
+```
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `status` | `string` | Yes | `"start"`, `"update"`, or `"stop"` |
+| `message` | `string` | Yes | Current spinner text |
+| `code` | `number` | On stop | Exit code (`0` = success, non-zero = error) |
+
+Lifecycle: exactly one `start`, zero or more `update`, exactly one `stop`. All messages share the same `id`.
+
+### Progress
+
+Progress bars emit lifecycle events for determinate operations with a known completion percentage. No resolve expected.
+
+```json
+{ "v": 1, "type": "progress", "id": "uuid", "status": "start", "message": "Downloading...", "percent": 0 }
+{ "v": 1, "type": "progress", "id": "uuid", "status": "update", "message": "Downloading...", "percent": 47 }
+{ "v": 1, "type": "progress", "id": "uuid", "status": "stop", "message": "Done", "percent": 100, "code": 0 }
+```
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `status` | `string` | Yes | `"start"`, `"update"`, or `"stop"` |
+| `message` | `string` | Yes | Current status text |
+| `percent` | `number` | Yes | Progress percentage (0-100) |
+| `code` | `number` | On stop | Exit code (`0` = success, non-zero = error) |
+
+Terminal hosts can render these as native progress bars or percentage indicators.
+
+### Tasks
+
+Tasks emit lifecycle events for multi-step operations. Each event includes the full state of all tasks. No resolve expected.
+
+```json
+{ "v": 1, "type": "tasks", "id": "uuid", "status": "start", "tasks": [
+  { "title": "Install deps", "status": "pending" },
+  { "title": "Compile", "status": "pending" }
+]}
+{ "v": 1, "type": "tasks", "id": "uuid", "status": "update", "tasks": [
+  { "title": "Install deps", "status": "success" },
+  { "title": "Compile", "status": "running" }
+]}
+{ "v": 1, "type": "tasks", "id": "uuid", "status": "stop", "tasks": [
+  { "title": "Install deps", "status": "success" },
+  { "title": "Compile", "status": "success" }
+]}
+```
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `status` | `string` | Yes | `"start"`, `"update"`, or `"stop"` |
+| `tasks` | `array` | Yes | Array of `{ title, status }` objects |
+| `tasks[].title` | `string` | Yes | Task display text |
+| `tasks[].status` | `string` | Yes | `"pending"`, `"running"`, `"success"`, `"error"`, `"skipped"` |
+
+Terminal hosts can render these as structured task lists with individual status indicators.
+
+### Log
+
+Log events are informational. No resolve expected.
+
+```json
+{ "v": 1, "type": "log", "level": "intro", "message": "My CLI v1.0" }
+{ "v": 1, "type": "log", "level": "info", "message": "Connected to database" }
+{ "v": 1, "type": "log", "level": "success", "message": "Build complete" }
+{ "v": 1, "type": "log", "level": "warn", "message": "Deprecated config" }
+{ "v": 1, "type": "log", "level": "error", "message": "Connection failed" }
+{ "v": 1, "type": "log", "level": "note", "message": "Details here", "title": "Important" }
+{ "v": 1, "type": "log", "level": "outro", "message": "Goodbye" }
+```
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `level` | `string` | Yes | `"intro"`, `"outro"`, `"info"`, `"success"`, `"warn"`, `"error"`, `"note"`, `"step"` |
+| `message` | `string` | Yes | Log text |
+| `title` | `string` | No | Title for note-level logs |
+
+Terminal hosts can render these as toast notifications, status bar updates, or structured log panels.
+
+## Terminal Host Implementation
+
+1. Register an OSC handler for code 7770
+2. Parse the JSON payload
+3. If `type` is not `"resolve"`, display a native UI (modal, panel, buttons)
+4. When the user makes a selection, write the resolve sequence into PTY stdin
+5. The application's stdin handler detects the resolve and completes the prompt
+
+The resolve sequence is written as raw bytes into the PTY's stdin file descriptor. The application's prompt library parses it.
+
+### xterm.js Example
+
+```typescript
+terminal.parser.registerOscHandler(7770, (data) => {
+  try {
+    const payload = JSON.parse(data);
+    if (payload.v === 1 && payload.type !== "resolve") {
+      showPromptUI(payload);
+      return true;
+    }
+  } catch {
+    // ignore malformed
+  }
+  return false;
+});
+```
+
+## Why OSC 7770
+
+There is no registry or standards body that assigns OSC codes. Terminal vendors pick unused numbers by convention:
+
+| Code | Owner |
+|---|---|
+| 0-19 | Standard (window title, colors) |
+| 52 | Clipboard (widely adopted) |
+| 99 | Kitty notifications |
+| 133 | Semantic prompts (FinalTerm/iTerm2/VS Code) |
+| 633 | VS Code shell integration |
+| 777 | rxvt-unicode notifications |
+| 1337 | iTerm2 proprietary extensions |
+| **7770** | **Structured terminal prompts (this spec)** |
+
+7770 sits in a high, unused range with no known collisions. It is easy to remember and distinct from established codes.
+
+<Callout title="OSC 133 vs OSC 7770">
+  OSC 133 (FinalTerm semantic prompts) marks shell prompt boundaries: where the prompt starts, where the command starts, where output begins. OSC 7770 describes application-level interactive prompts: what the CLI is asking and what the choices are. They are complementary, not overlapping. A terminal host would use both.
+</Callout>
+
+## Compatibility
+
+Unknown OSC sequences are silently ignored by terminals per the ECMA-48 standard. Applications can safely emit OSC 7770 in any terminal without side effects.
+
+## Protocol Version
+
+All payloads include `"v": 1`. Future versions may increment this number. Terminal hosts should ignore messages with unrecognized version numbers. New message types or optional fields do not require a version increment.
+
+## Further Reading
+
+- [PROTOCOL.md](https://github.com/nichochar/termprompt/blob/main/PROTOCOL.md) - Implementor-friendly protocol reference
+- [SPEC.md](https://github.com/nichochar/termprompt/blob/main/SPEC.md) - Formal specification with ABNF grammar, RFC 2119 requirement levels, security considerations, and extensibility rules

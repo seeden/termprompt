@@ -1,0 +1,158 @@
+---
+title: Tasks
+description: Multi-step task runner with individual status indicators.
+---
+
+import { Terminal, Cyan, Green, Red, Gray, Dim, Bold, Line } from '@/components/Terminal';
+
+## Preview
+
+<div className="not-prose mb-8 grid gap-4 md:grid-cols-2">
+
+<div>
+<p className="mb-2 text-sm text-fd-muted-foreground">Running</p>
+<Terminal title="tasks">
+<Line><Gray>│</Gray></Line>
+<Line><Green>◆</Green>  <Dim>Install dependencies</Dim></Line>
+<Line><Cyan>◒</Cyan>  Compile TypeScript</Line>
+<Line><Dim>○</Dim>  <Dim>Run tests</Dim></Line>
+<Line><Gray>│</Gray></Line>
+</Terminal>
+</div>
+
+<div>
+<p className="mb-2 text-sm text-fd-muted-foreground">Completed</p>
+<Terminal title="tasks">
+<Line><Gray>│</Gray></Line>
+<Line><Green>◆</Green>  <Dim>Install dependencies</Dim></Line>
+<Line><Green>◆</Green>  <Dim>Compile TypeScript</Dim></Line>
+<Line><Green>◆</Green>  <Dim>Run tests</Dim></Line>
+<Line><Gray>│</Gray></Line>
+</Terminal>
+</div>
+
+</div>
+
+## Usage
+
+```ts
+import { tasks } from 'termprompt';
+
+const result = await tasks([
+  {
+    title: 'Install dependencies',
+    task: async () => {
+      await installDeps();
+    },
+  },
+  {
+    title: 'Compile TypeScript',
+    task: async () => {
+      await compile();
+    },
+  },
+  {
+    title: 'Run tests',
+    task: async () => {
+      await runTests();
+    },
+  },
+]);
+
+if (result.errors.length > 0) {
+  console.error('Some tasks failed.');
+}
+```
+
+## API
+
+### `tasks(items, config?)`
+
+Returns `Promise<TasksResult>`.
+
+### TaskItem
+
+| Field     | Type                                             | Description                         |
+| --------- | ------------------------------------------------ | ----------------------------------- |
+| `title`   | `string`                                         | Task display text                   |
+| `task`    | `(ctx, update) => Promise<void>`                 | Async function to execute           |
+| `enabled` | `boolean \| ((ctx) => boolean)`                  | Skip task if `false`                |
+
+The `task` function receives a shared context object and an `update` callback to change the title mid-execution.
+
+### TasksConfig
+
+| Config       | Type       | Default          | Description            |
+| ------------ | ---------- | ---------------- | ---------------------- |
+| `concurrent` | `boolean`  | `false`          | Run tasks in parallel  |
+| `output`     | `Writable` | `process.stdout` | Output stream          |
+
+### TasksResult
+
+| Field    | Type      | Description                        |
+| -------- | --------- | ---------------------------------- |
+| `errors` | `Error[]` | Errors from any failed tasks       |
+
+## Concurrent Execution
+
+```ts
+await tasks(
+  [
+    { title: 'Lint', task: async () => await lint() },
+    { title: 'Test', task: async () => await test() },
+    { title: 'Build', task: async () => await build() },
+  ],
+  { concurrent: true },
+);
+```
+
+All tasks start at the same time. The display updates as each completes independently.
+
+## Conditional Tasks
+
+```ts
+await tasks([
+  {
+    title: 'Run migrations',
+    task: async () => await migrate(),
+    enabled: process.env.NODE_ENV === 'production',
+  },
+]);
+```
+
+Disabled tasks show as skipped with a strikethrough title.
+
+<div className="not-prose mt-4">
+<Terminal title="skipped task">
+<Line><Gray>│</Gray></Line>
+<Line><Green>◆</Green>  <Dim>Install dependencies</Dim></Line>
+<Line><Dim>─</Dim>  <Dim><s>Run migrations</s></Dim></Line>
+<Line><Green>◆</Green>  <Dim>Start server</Dim></Line>
+<Line><Gray>│</Gray></Line>
+</Terminal>
+</div>
+
+## Updating Task Title
+
+```ts
+await tasks([
+  {
+    title: 'Downloading',
+    task: async (ctx, update) => {
+      update('Downloading... 50%');
+      await download();
+      update('Downloading... 100%');
+    },
+  },
+]);
+```
+
+## Task Statuses
+
+| Status    | Icon          | Description      |
+| --------- | ------------- | ---------------- |
+| `pending` | `○` dim       | Not started      |
+| `running` | `◒` animated  | Currently active |
+| `success` | `◆` green     | Completed        |
+| `error`   | `▲` red       | Failed           |
+| `skipped` | `─` dim       | Disabled/skipped |

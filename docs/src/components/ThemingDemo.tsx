@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useAccent } from './AccentContext';
 
 const PRESETS = [
   { color: '#22d3ee', label: 'cyan' },
@@ -11,7 +11,7 @@ const PRESETS = [
 ];
 
 export function ThemingDemo() {
-  const [accent, setAccent] = useState('#22d3ee');
+  const { accent, setAccent } = useAccent();
 
   return (
     <div className="grid items-start gap-12 lg:grid-cols-[2fr_3fr] lg:gap-16">

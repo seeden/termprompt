@@ -9,10 +9,12 @@ import {
   Bold,
   Inv,
   Line,
+  Accent,
 } from '@/components/Terminal';
 import { BrowserFrame, NativeSelect } from '@/components/SmartTerminal';
 import ThemeToggle from '@/components/ThemeToggle';
 import { ThemingDemo } from '@/components/ThemingDemo';
+import { AccentProvider } from '@/components/AccentContext';
 import { GradientSection } from '@/components/GradientSections';
 import Testimonials from '@/components/Testimonials';
 
@@ -87,26 +89,30 @@ if (isCancel(framework)) process.exit(0);
 log.success(\`Created \${name} with \${framework}.\`);
 outro('Happy coding.');`;
 
-const OSC_EXAMPLE = `
-// Your app code is identical. Zero changes needed.
-const framework = await select({
-  message: 'Pick a framework',
-  options: [
-    { value: 'next', label: 'Next.js' },
-    { value: 'hono', label: 'Hono' },
-  ],
-});
+/* ── Ecosystem data ── */
 
-// termprompt emits OSC 7770 alongside the TUI.
-// Smart terminals intercept it and render native UI.
-// Standard terminals just show the TUI. Zero config.`;
+const TERMINALS = [
+  {
+    name: 'Anyterm',
+    type: 'Web terminal',
+    status: 'supported' as const,
+    url: 'https://anyterm.dev',
+    desc: 'Web-based terminal with full OSC 7770 support. Native prompts in your browser.',
+  },
+  {
+    name: 'VSCode Terminal',
+    type: 'IDE extension',
+    status: 'coming' as const,
+    desc: 'Native prompt UI directly in the VSCode integrated terminal.',
+  },
+];
 
 /* ── Features data ── */
 
 const FEATURES = [
   {
     title: 'OSC 7770',
-    desc: 'Smart terminals render native UI. Standard terminals get the TUI. Same code, zero config.',
+    desc: 'Smart terminals like Anyterm render native UI. Standard terminals get the TUI. Same code, zero config.',
   },
   {
     title: 'zero dependencies',
@@ -143,10 +149,6 @@ export default function HomePage() {
               from { opacity: 0; transform: translateY(24px); }
               to { opacity: 1; transform: translateY(0); }
             }
-            @keyframes seamPulse {
-              0%, 100% { opacity: 0.6; }
-              50% { opacity: 1; }
-            }
             .anim-fade {
               opacity: 0;
               animation: fadeUp 0.6s ease-out forwards;
@@ -177,6 +179,9 @@ export default function HomePage() {
               <Link href="/docs" className="transition-colors hover:text-fd-foreground">
                 docs
               </Link>
+              <a href="#ecosystem" className="transition-colors hover:text-fd-foreground">
+                ecosystem
+              </a>
               <a
                 href="https://github.com/seeden/termprompt"
                 target="_blank"
@@ -207,7 +212,7 @@ export default function HomePage() {
                 className="anim-fade font-[JetBrains_Mono,monospace] text-[11px] text-fd-muted-foreground"
                 style={{ animationDelay: '0ms' }}
               >
-                TypeScript&ensp;&middot;&ensp;zero dependencies&ensp;&middot;&ensp;MIT
+                TypeScript&ensp;&middot;&ensp;zero dependencies&ensp;&middot;&ensp;MIT&ensp;&middot;&ensp;OSC 7770
               </div>
 
               <h1 className="mt-6">
@@ -215,7 +220,7 @@ export default function HomePage() {
                   className="anim-fade block font-['DM_Sans',sans-serif] text-4xl font-extrabold leading-[1.08] tracking-[-0.04em] text-fd-foreground md:text-6xl lg:text-7xl"
                   style={{ animationDelay: '100ms' }}
                 >
-                  Beautiful terminal prompts,
+                  One API.
                 </span>
                 <span
                   className="anim-fade block bg-clip-text font-['DM_Sans',sans-serif] text-4xl font-extrabold leading-[1.08] tracking-[-0.04em] text-transparent md:text-6xl lg:text-7xl"
@@ -224,7 +229,7 @@ export default function HomePage() {
                     backgroundImage: 'linear-gradient(135deg, #0891b2, #22d3ee, #a5f3fc)',
                   }}
                 >
-                  done right.
+                  Two experiences.
                 </span>
               </h1>
 
@@ -232,8 +237,8 @@ export default function HomePage() {
                 className="anim-fade mt-6 max-w-md font-[JetBrains_Mono,monospace] text-sm leading-relaxed text-fd-muted-foreground"
                 style={{ animationDelay: '300ms' }}
               >
-                Zero dependencies. Smart terminals render native UI from the same code.
-                Standard terminals get a beautiful TUI.
+                termprompt renders a beautiful TUI in any terminal.
+                Smart terminals get native UI. Same code, zero config, zero dependencies.
               </p>
 
               <div
@@ -253,152 +258,135 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* Terminal mockup — full flow with intro/outro */}
+            {/* Dual-view: TUI terminal overlapping with native UI */}
             <div
-              className="anim-fade lg:mr-[-4rem]"
+              className="anim-fade relative lg:mr-[-2rem]"
               style={{ animationDelay: '500ms', animationDuration: '0.8s' }}
             >
-              <Terminal
-                title="create-app"
-                className="shadow-[0_0_80px_-20px_rgba(34,211,238,0.12)] transition-transform duration-300 hover:translate-y-[-2px]"
-              >
-                <Line>
-                  <Gray>┌</Gray> <Bold>create-app</Bold>
-                </Line>
-                <Line>
-                  <Gray>│</Gray>
-                </Line>
-                <Line>
-                  <Green>◆</Green> <Bold>Project name?</Bold>
-                </Line>
-                <Line>
-                  <Gray>│</Gray> <Dim>my-app</Dim>
-                </Line>
-                <Line>
-                  <Green>◆</Green> <Bold>Pick a framework</Bold>
-                </Line>
-                <Line>
-                  <Gray>│</Gray> <Dim>Next.js</Dim>
-                </Line>
-                <Line>
-                  <Green>◆</Green> <Bold>Select features</Bold>
-                </Line>
-                <Line>
-                  <Gray>│</Gray> <Dim>TypeScript, Vitest</Dim>
-                </Line>
-                <Line>
-                  <Green>◆</Green> <Bold>Initialize git?</Bold>
-                </Line>
-                <Line>
-                  <Gray>│</Gray> <Dim>Yes</Dim>
-                </Line>
-                <Line>
-                  <Green>◆</Green> Project created!
-                </Line>
-                <Line>
-                  <Gray>└</Gray> Happy coding.
-                </Line>
-              </Terminal>
+              {/* TUI terminal — behind, offset top-left */}
+              <div className="relative z-10 max-w-[85%]">
+                <Terminal
+                  title="standard terminal"
+                  className="shadow-[0_0_60px_-20px_rgba(34,211,238,0.10)]"
+                >
+                  <Line>
+                    <Cyan>◇</Cyan> <Bold>Pick a framework</Bold>
+                  </Line>
+                  <Line>
+                    <Gray>│</Gray> <Green>◉</Green> Next.js <Dim>(React SSR)</Dim>
+                  </Line>
+                  <Line>
+                    <Gray>│</Gray> <Dim>○ Hono</Dim> <Dim>(Edge-first)</Dim>
+                  </Line>
+                  <Line>
+                    <Gray>│</Gray> <Dim>○ Astro</Dim> <Dim>(Content-first)</Dim>
+                  </Line>
+                  <Line>
+                    <Gray>└</Gray>
+                  </Line>
+                </Terminal>
+              </div>
+
+              {/* Native UI — in front, offset bottom-right, overlapping */}
+              <div className="relative z-20 mt-[-3rem] ml-auto mr-0 w-[75%] lg:mt-[-4rem]">
+                <BrowserFrame url="anyterm.dev">
+                  <NativeSelect />
+                </BrowserFrame>
+              </div>
             </div>
           </div>
         </GradientSection>
 
-        {/* ━━ OSC 7770 Centerpiece ━━ */}
+        {/* ━━ How It Works ━━ */}
         <section className="bg-[#0c1017] py-24 lg:py-32">
           <div className="mx-auto max-w-7xl px-6">
             {/* Heading */}
-            <div className="anim-scroll mb-12 text-center lg:mb-16">
+            <div className="anim-scroll mb-16 text-center">
               <p className="mb-4 font-[JetBrains_Mono,monospace] text-[11px] font-medium uppercase tracking-[0.2em] text-[#22d3ee]">
-                OSC 7770 Protocol
+                How it works
               </p>
-              <h2 className="font-['DM_Sans',sans-serif] text-3xl font-extrabold tracking-[-0.03em] text-[#e4e8f0] md:text-5xl lg:text-6xl">
-                Same code.{' '}
+              <h2 className="font-['DM_Sans',sans-serif] text-3xl font-extrabold tracking-[-0.03em] text-[#e4e8f0] md:text-5xl">
+                Your code doesn&apos;t change.{' '}
                 <span
                   className="bg-clip-text text-transparent"
                   style={{
                     backgroundImage: 'linear-gradient(135deg, #0891b2, #22d3ee, #a5f3fc)',
                   }}
                 >
-                  Two worlds.
+                  The terminal decides.
                 </span>
               </h2>
-              <p className="mx-auto mt-4 max-w-2xl font-[JetBrains_Mono,monospace] text-sm leading-relaxed text-[#8d96a8]">
-                termprompt emits structured metadata alongside the TUI. Smart terminals
-                intercept it and render native UI. Standard terminals show the TUI. Zero
-                config, zero degradation.
-              </p>
             </div>
 
-            {/* Split comparison */}
-            <div className="anim-scroll relative mx-auto max-w-5xl overflow-hidden rounded-2xl border border-[#1e2d40] shadow-[0_0_60px_-12px_rgba(34,211,238,0.08)]">
-              <div className="grid lg:grid-cols-[3fr_2fr]">
-                {/* Left: raw TUI (wider) */}
-                <div className="relative bg-[#0a0e14] p-8 lg:p-12">
-                  <p className="mb-6 font-[JetBrains_Mono,monospace] text-[11px] font-medium uppercase tracking-[0.2em] text-[#4a5568]">
-                    Any terminal
-                  </p>
-                  <pre className="font-[JetBrains_Mono,monospace] text-[13px] leading-6 text-[#c9d1d9]">
-                    <Line>
-                      <Cyan>◇</Cyan> <Bold>Pick a framework</Bold>
-                    </Line>
-                    <Line>
-                      <Gray>│</Gray> <Green>◉</Green> Next.js{' '}
-                      <Dim>(React SSR)</Dim>
-                    </Line>
-                    <Line>
-                      <Gray>│</Gray> <Dim>○ Hono</Dim> <Dim>(Edge-first)</Dim>
-                    </Line>
-                    <Line>
-                      <Gray>│</Gray> <Dim>○ Astro</Dim>{' '}
-                      <Dim>(Content-first)</Dim>
-                    </Line>
-                    <Line>
-                      <Gray>└</Gray>
-                    </Line>
-                  </pre>
+            {/* Three steps */}
+            <div className="grid gap-8 md:grid-cols-3">
+              {/* Step 1: You write prompts */}
+              <div className="anim-scroll rounded-xl border border-[#1e2d40] bg-[#0a0e14] p-8">
+                <div className="mb-4 flex items-center gap-3">
+                  <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#22d3ee]/10 font-[JetBrains_Mono,monospace] text-[12px] font-bold text-[#22d3ee]">1</span>
+                  <h3 className="font-[JetBrains_Mono,monospace] text-[13px] font-bold text-[#e4e8f0]">You write prompts</h3>
                 </div>
+                <pre className="mb-4 overflow-x-auto rounded-lg bg-[#0c1017] p-4 font-[JetBrains_Mono,monospace] text-[12px] leading-6 text-[#c9d1d9]">
+{`await select({
+  message: 'Pick a framework',
+  options: [
+    { value: 'next', label: 'Next.js' },
+    { value: 'hono', label: 'Hono' },
+  ],
+});`}
+                </pre>
+                <p className="font-[JetBrains_Mono,monospace] text-[12px] leading-relaxed text-[#8d96a8]">
+                  Standard termprompt API. Nothing special.
+                </p>
+              </div>
 
-                {/* Glowing seam */}
-                <div
-                  className="absolute top-0 left-[60%] hidden h-full w-px -translate-x-1/2 lg:block"
-                  style={{
-                    background:
-                      'linear-gradient(to bottom, transparent, #22d3ee, transparent)',
-                    animation: 'seamPulse 3s ease-in-out infinite',
-                  }}
-                />
-
-                {/* Right: native UI */}
-                <div className="bg-[#111118] p-8 lg:p-12">
-                  <p className="mb-6 font-[JetBrains_Mono,monospace] text-[11px] font-medium uppercase tracking-[0.2em] text-[#4a5568]">
-                    Smart terminal host
-                  </p>
-                  <div className="flex items-center justify-center">
-                    <BrowserFrame url="your-terminal.dev">
-                      <NativeSelect />
-                    </BrowserFrame>
+              {/* Step 2: termprompt emits both */}
+              <div className="anim-scroll rounded-xl border border-[#1e2d40] bg-[#0a0e14] p-8">
+                <div className="mb-4 flex items-center gap-3">
+                  <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#22d3ee]/10 font-[JetBrains_Mono,monospace] text-[12px] font-bold text-[#22d3ee]">2</span>
+                  <h3 className="font-[JetBrains_Mono,monospace] text-[13px] font-bold text-[#e4e8f0]">termprompt emits both</h3>
+                </div>
+                <div className="mb-4 space-y-3">
+                  <div className="rounded-lg bg-[#0c1017] p-4">
+                    <p className="mb-2 font-[JetBrains_Mono,monospace] text-[10px] uppercase tracking-[0.15em] text-[#4a5568]">TUI output</p>
+                    <pre className="font-[JetBrains_Mono,monospace] text-[12px] leading-5 text-[#c9d1d9]">
+                      <span className="text-[#22d3ee]">◇</span> Pick a framework{'\n'}
+                      <span className="text-[#4a5568]">│</span> <span className="text-[#4ade80]">◉</span> Next.js{'\n'}
+                      <span className="text-[#4a5568]">│</span> <span className="text-[#6b7280]">○ Hono</span>
+                    </pre>
+                  </div>
+                  <div className="rounded-lg bg-[#0c1017] p-4">
+                    <p className="mb-2 font-[JetBrains_Mono,monospace] text-[10px] uppercase tracking-[0.15em] text-[#4a5568]">OSC 7770</p>
+                    <code className="font-[JetBrains_Mono,monospace] text-[11px] leading-5 text-[#6b7280]">
+                      <span className="text-[#22d3ee]">ESC</span>{']7770;'}
+                      <span className="text-[#a5d6ff]">{'{...}'}</span>
+                      <span className="text-[#22d3ee]">BEL</span>
+                    </code>
                   </div>
                 </div>
+                <p className="font-[JetBrains_Mono,monospace] text-[12px] leading-relaxed text-[#8d96a8]">
+                  TUI renders in the terminal. Structured metadata rides alongside.
+                </p>
+              </div>
+
+              {/* Step 3: Smart terminals upgrade */}
+              <div className="anim-scroll rounded-xl border border-[#1e2d40] bg-[#0a0e14] p-8">
+                <div className="mb-4 flex items-center gap-3">
+                  <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#22d3ee]/10 font-[JetBrains_Mono,monospace] text-[12px] font-bold text-[#22d3ee]">3</span>
+                  <h3 className="font-[JetBrains_Mono,monospace] text-[13px] font-bold text-[#e4e8f0]">Smart terminals upgrade</h3>
+                </div>
+                <div className="mb-4">
+                  <BrowserFrame url="anyterm.dev">
+                    <NativeSelect />
+                  </BrowserFrame>
+                </div>
+                <p className="font-[JetBrains_Mono,monospace] text-[12px] leading-relaxed text-[#8d96a8]">
+                  Terminals that understand 7770 render native UI. Others show the TUI.
+                </p>
               </div>
             </div>
 
-            {/* Code block */}
-            <div className="mx-auto mt-10 max-w-3xl">
-              <Code code={OSC_EXAMPLE} label="your code stays the same" />
-            </div>
-
-            {/* Wire format */}
-            <div className="mx-auto mt-6 max-w-3xl text-center">
-              <code className="inline-block rounded-lg border border-[#1e2d40] bg-[#0a0e14] px-4 py-2 font-[JetBrains_Mono,monospace] text-[11px] text-[#6b7280]">
-                <span className="text-[#22d3ee]">ESC</span> ] 7770 ;{' '}
-                <span className="text-[#a5d6ff]">
-                  {'{"v":1,"type":"select","message":"Pick a framework",...}'}
-                </span>{' '}
-                <span className="text-[#22d3ee]">BEL</span>
-              </code>
-            </div>
-
-            <div className="mt-8 text-center">
+            <div className="mt-10 text-center">
               <Link
                 href="/docs/advanced/osc-protocol"
                 className="font-[JetBrains_Mono,monospace] text-[13px] text-[#22d3ee] hover:underline"
@@ -409,7 +397,8 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* ━━ Brand Theming (interactive) ━━ */}
+        {/* ━━ Brand Theming (interactive) + Prompt/Display Strips ━━ */}
+        <AccentProvider>
         <GradientSection variant="mid" className="py-20 lg:py-28">
           <div className="mx-auto max-w-7xl px-6">
             <ThemingDemo />
@@ -430,7 +419,7 @@ export default function HomePage() {
               <div className="anim-scroll flex flex-col transition-transform duration-300 hover:translate-y-[-2px]">
                 <Terminal title="select" className="flex-1">
                   <Line>
-                    <Cyan>◇</Cyan> <Bold>Pick a framework</Bold>
+                    <Accent>◇</Accent> <Bold>Pick a framework</Bold>
                   </Line>
                   <Line>
                     <Gray>│</Gray> <Green>◉</Green> Next.js <Dim>(React SSR)</Dim>
@@ -450,10 +439,10 @@ export default function HomePage() {
               <div className="anim-scroll flex flex-col transition-transform duration-300 hover:translate-y-[-2px]">
                 <Terminal title="confirm" className="flex-1">
                   <Line>
-                    <Cyan>◇</Cyan> <Bold>Deploy to production?</Bold>
+                    <Accent>◇</Accent> <Bold>Deploy to production?</Bold>
                   </Line>
                   <Line>
-                    <Gray>│</Gray> <Cyan><u>Yes</u></Cyan> / <Dim>No</Dim>
+                    <Gray>│</Gray> <Accent><u>Yes</u></Accent> / <Dim>No</Dim>
                   </Line>
                   <Line>
                     <Gray>└</Gray>
@@ -464,7 +453,7 @@ export default function HomePage() {
               <div className="anim-scroll flex flex-col transition-transform duration-300 hover:translate-y-[-2px]">
                 <Terminal title="input" className="flex-1">
                   <Line>
-                    <Cyan>◇</Cyan> <Bold>Project name?</Bold>
+                    <Accent>◇</Accent> <Bold>Project name?</Bold>
                   </Line>
                   <Line>
                     <Gray>│</Gray> my-app
@@ -479,10 +468,10 @@ export default function HomePage() {
               <div className="anim-scroll flex flex-col transition-transform duration-300 hover:translate-y-[-2px]">
                 <Terminal title="multiselect" className="flex-1">
                   <Line>
-                    <Cyan>◇</Cyan> <Bold>Select features</Bold>
+                    <Accent>◇</Accent> <Bold>Select features</Bold>
                   </Line>
                   <Line>
-                    <Gray>│</Gray> <Cyan>{'>'}</Cyan>
+                    <Gray>│</Gray> <Accent>{'>'}</Accent>
                     <Green>■</Green> TypeScript
                   </Line>
                   <Line>
@@ -506,7 +495,7 @@ export default function HomePage() {
               <div className="anim-scroll flex flex-col transition-transform duration-300 hover:translate-y-[-2px]">
                 <Terminal title="password" className="flex-1">
                   <Line>
-                    <Cyan>◇</Cyan> <Bold>Enter your API key</Bold>
+                    <Accent>◇</Accent> <Bold>Enter your API key</Bold>
                   </Line>
                   <Line>
                     <Gray>│</Gray> ••••••••
@@ -520,7 +509,7 @@ export default function HomePage() {
               <div className="anim-scroll flex flex-col transition-transform duration-300 hover:translate-y-[-2px]">
                 <Terminal title="search" className="flex-1">
                   <Line>
-                    <Cyan>◇</Cyan> <Bold>Select timezone</Bold>
+                    <Accent>◇</Accent> <Bold>Select timezone</Bold>
                   </Line>
                   <Line>
                     <Gray>│</Gray> pac
@@ -540,7 +529,7 @@ export default function HomePage() {
               <div className="anim-scroll flex flex-col transition-transform duration-300 hover:translate-y-[-2px]">
                 <Terminal title="number" className="flex-1">
                   <Line>
-                    <Cyan>◇</Cyan> <Bold>Port number?</Bold>
+                    <Accent>◇</Accent> <Bold>Port number?</Bold>
                   </Line>
                   <Line>
                     <Gray>│</Gray> 3000
@@ -566,7 +555,7 @@ export default function HomePage() {
                 <div className="anim-scroll flex flex-col transition-transform duration-300 hover:translate-y-[-2px]">
                   <Terminal title="spinner" className="flex-1">
                     <Line>
-                      <Cyan>◒</Cyan> {'  '}Installing dependencies...
+                      <Accent>◒</Accent> {'  '}Installing dependencies...
                     </Line>
                     <Line>
                       <Green>◆</Green> {'  '}Installed 142 packages
@@ -577,7 +566,7 @@ export default function HomePage() {
                 <div className="anim-scroll flex flex-col transition-transform duration-300 hover:translate-y-[-2px]">
                   <Terminal title="progress" className="flex-1">
                     <Line>
-                      <Cyan>████████████</Cyan>
+                      <Accent>████████████</Accent>
                       <Dim>░░░░░░░░</Dim> {'  '}Downloading... {'  '}
                       <Dim>60%</Dim>
                     </Line>
@@ -597,7 +586,7 @@ export default function HomePage() {
                       <Dim>Install dependencies</Dim>
                     </Line>
                     <Line>
-                      <Cyan>◒</Cyan> {'  '}Generating types...
+                      <Accent>◒</Accent> {'  '}Generating types...
                     </Line>
                     <Line>
                       <Dim>○</Dim> {'  '}
@@ -646,6 +635,7 @@ export default function HomePage() {
             </div>
           </div>
         </section>
+        </AccentProvider>
 
         {/* ━━ Features Grid ━━ */}
         <GradientSection variant="lower" className="py-20 lg:py-28">
@@ -670,6 +660,76 @@ export default function HomePage() {
           </div>
         </GradientSection>
 
+        {/* ━━ Terminal Ecosystem ━━ */}
+        <section id="ecosystem" className="bg-[#0c1017] py-20 lg:py-28">
+          <div className="mx-auto max-w-7xl px-6">
+            <div className="anim-scroll mb-12">
+              <p className="mb-4 font-[JetBrains_Mono,monospace] text-[11px] font-medium uppercase tracking-[0.2em] text-[#22d3ee]">
+                Ecosystem
+              </p>
+              <h2 className="font-['DM_Sans',sans-serif] text-3xl font-extrabold tracking-[-0.03em] text-[#e4e8f0] md:text-4xl">
+                Which terminals support 7770?
+              </h2>
+              <p className="mt-4 max-w-2xl font-[JetBrains_Mono,monospace] text-sm leading-relaxed text-[#8d96a8]">
+                OSC 7770 is an open standard. Terminal hosts adopt it independently.
+                Your code works everywhere.
+              </p>
+            </div>
+
+            <div className="anim-scroll grid gap-4 md:grid-cols-2">
+              {TERMINALS.map((t) => (
+                <div
+                  key={t.name}
+                  className="group relative rounded-xl border border-[#1e2d40] bg-[#0a0e14] p-6 transition-colors hover:border-[#2a3a50]"
+                  style={t.status === 'supported' ? { borderLeftWidth: 3, borderLeftColor: '#22d3ee' } : {}}
+                >
+                  <div className="mb-3 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <h3 className="font-[JetBrains_Mono,monospace] text-[14px] font-bold text-[#e4e8f0]">
+                        {t.url ? (
+                          <a
+                            href={t.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="transition-colors hover:text-[#22d3ee]"
+                          >
+                            {t.name}
+                          </a>
+                        ) : (
+                          t.name
+                        )}
+                      </h3>
+                      <span className="font-[JetBrains_Mono,monospace] text-[11px] text-[#4a5568]">{t.type}</span>
+                    </div>
+                    {t.status === 'supported' ? (
+                      <span className="rounded-full bg-[#22d3ee]/10 px-3 py-1 font-[JetBrains_Mono,monospace] text-[11px] font-medium text-[#22d3ee]">
+                        supported
+                      </span>
+                    ) : (
+                      <span className="rounded-full bg-[#1e2d40] px-3 py-1 font-[JetBrains_Mono,monospace] text-[11px] text-[#4a5568]">
+                        coming soon
+                      </span>
+                    )}
+                  </div>
+                  <p className={`font-[JetBrains_Mono,monospace] text-[12px] leading-relaxed ${t.status === 'supported' ? 'text-[#8d96a8]' : 'text-[#4a5568]'}`}>
+                    {t.desc}
+                  </p>
+                </div>
+              ))}
+            </div>
+
+            <p className="anim-scroll mt-8 font-[JetBrains_Mono,monospace] text-[12px] leading-relaxed text-[#4a5568]">
+              Want your terminal listed here?{' '}
+              <Link
+                href="/docs/advanced/osc-protocol"
+                className="text-[#22d3ee] hover:underline"
+              >
+                The spec is open and MIT-licensed.
+              </Link>
+            </p>
+          </div>
+        </section>
+
         {/* ━━ Testimonials ━━ */}
         <section className="border-t border-fd-border/40 py-20 md:py-24">
           <div className="mx-auto max-w-7xl px-6">
@@ -677,27 +737,12 @@ export default function HomePage() {
               Community
             </p>
             <h2 className="mb-4 max-w-md font-['DM_Sans',sans-serif] text-2xl font-extrabold tracking-tight text-fd-foreground md:text-3xl">
-              Built with termprompt
+              Who&apos;s using termprompt?
             </h2>
             <p className="mb-10 max-w-lg text-sm leading-relaxed text-fd-muted-foreground">
               Companies and developers shipping with termprompt in production. Get your logo and a dofollow backlink
               on this page.
             </p>
-
-            {/* Trusted by */}
-            <div className="mb-12 flex flex-wrap items-center gap-8">
-              <p className="font-[JetBrains_Mono,monospace] text-[11px] font-medium uppercase tracking-[0.2em] text-fd-muted-foreground">
-                Trusted by
-              </p>
-              <a
-                href="https://anyterm.dev"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="font-[JetBrains_Mono,monospace] text-lg font-bold tracking-tight text-fd-foreground opacity-70 transition-opacity hover:opacity-100"
-              >
-                Anyterm
-              </a>
-            </div>
 
             <Testimonials />
           </div>

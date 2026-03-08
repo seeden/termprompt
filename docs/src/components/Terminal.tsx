@@ -72,6 +72,10 @@ export function Inv({ children }: { children: ReactNode }) {
   return <span className="bg-[#c9d1d9] text-[#0c1017]">{children}</span>;
 }
 
+export function Accent({ children }: { children: ReactNode }) {
+  return <span style={{ color: 'var(--tp-accent, #22d3ee)' }}>{children}</span>;
+}
+
 export function Line({ children }: { children: ReactNode }) {
   return <div>{children}</div>;
 }

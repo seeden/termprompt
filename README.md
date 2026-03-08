@@ -399,6 +399,14 @@ if (isCancel(result)) {
 
 `Ctrl+C` or `Escape` triggers cancellation. With `group()`, cancelling any prompt cancels the entire group.
 
+## Full example
+
+See [`examples/basic.ts`](./examples/basic.ts) for a complete example that uses every component: `group`, `input`, `select`, `search`, `number`, `multiselect`, `password`, `confirm`, `spinner`, `progress`, `tasks`, `note`, and `log`.
+
+```bash
+npm run build && node --experimental-strip-types examples/basic.ts
+```
+
 ## OSC 7770
 
 Every prompt, spinner, progress bar, and log message emits an [OSC 7770](https://github.com/seeden/termprompt/blob/main/SPEC.md) escape sequence with a JSON payload describing the structured data:

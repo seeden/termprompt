@@ -1,3 +1,4 @@
+import { isDeepStrictEqual } from "node:util";
 import type { KeyPress, PromptState } from "../types.js";
 import type { Cancel } from "../symbols.js";
 import { createPrompt } from "../core/prompt.js";
@@ -51,6 +52,14 @@ function filterOptions<T>(
   );
 }
 
+function parseResolvedSearchValue<T>(resolved: unknown, options: SearchOption<T>[]): T {
+  const matched = options.find((option) => isDeepStrictEqual(option.value, resolved));
+  if (!matched) {
+    throw new Error("Invalid resolve value");
+  }
+  return matched.value;
+}
+
 export async function search<T>(
   config: SearchConfig<T>,
 ): Promise<T | Cancel> {
@@ -78,12 +87,13 @@ export async function search<T>(
       id: promptId,
       message,
       options: options.map((o) => ({
-        value: String(o.value),
+        value: o.value,
         label: o.label,
         hint: o.hint,
       })),
       placeholder,
     },
+    parseOscResolveValue: (resolved: unknown) => parseResolvedSearchValue(resolved, options),
 
     onKey(key: KeyPress, current: { value: T; state: PromptState }) {
       const s = state;

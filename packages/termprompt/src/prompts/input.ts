@@ -44,6 +44,20 @@ export async function input(config: InputConfig): Promise<string | Cancel> {
       placeholder,
       initialValue: initialValue || undefined,
     },
+    parseOscResolveValue(value: unknown) {
+      if (typeof value !== "string") {
+        throw new Error("Resolve value must be string");
+      }
+
+      if (validate) {
+        const validation = validate(value);
+        if (validation !== true) {
+          throw new Error("Resolve value failed validation");
+        }
+      }
+
+      return value;
+    },
 
     onKey(key: KeyPress, current: { value: string; state: PromptState }) {
       const s = inputState;

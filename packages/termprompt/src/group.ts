@@ -13,7 +13,7 @@ export type GroupOptions = {
 export async function group<T extends Record<string, unknown>>(
   prompts: GroupConfig<T>,
   options?: GroupOptions,
-): Promise<T> {
+): Promise<Partial<T>> {
   const results = {} as Partial<T>;
 
   for (const [key, promptFn] of Object.entries(prompts)) {
@@ -23,11 +23,11 @@ export async function group<T extends Record<string, unknown>>(
 
     if (isCancel(value)) {
       options?.onCancel?.();
-      return results as T;
+      return results;
     }
 
     (results as Record<string, unknown>)[key] = value;
   }
 
-  return results as T;
+  return results;
 }

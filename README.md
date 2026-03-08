@@ -344,7 +344,7 @@ outro('All done!');
 
 ### group
 
-Chain prompts together. Each step receives previous results. Stops on cancel.
+Chain prompts together. Each step receives previous results. Stops on cancel and returns collected answers up to that point.
 
 ```typescript
 const answers = await group({

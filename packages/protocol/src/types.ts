@@ -4,7 +4,7 @@ export type OscPromptPayload = {
   id: string;
   message: string;
   options?: Array<{
-    value: string;
+    value: unknown;
     label: string;
     hint?: string;
     disabled?: boolean;

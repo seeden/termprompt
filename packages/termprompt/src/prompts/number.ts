@@ -70,7 +70,33 @@ export async function number(config: NumberConfig): Promise<number | Cancel> {
       id: promptId,
       message,
       placeholder,
-      initialValue: initialValue !== undefined ? String(initialValue) : undefined,
+      initialValue,
+    },
+    parseOscResolveValue(value: unknown) {
+      const num =
+        typeof value === "number"
+          ? value
+          : typeof value === "string"
+            ? Number(value)
+            : Number.NaN;
+
+      if (!Number.isFinite(num)) {
+        throw new Error("Resolve value must be numeric");
+      }
+      if (min !== undefined && num < min) {
+        throw new Error("Resolve value below min");
+      }
+      if (max !== undefined && num > max) {
+        throw new Error("Resolve value above max");
+      }
+      if (validate) {
+        const validation = validate(num);
+        if (validation !== true) {
+          throw new Error("Resolve value failed validation");
+        }
+      }
+
+      return num;
     },
 
     onKey(key: KeyPress, current: { value: number; state: PromptState }) {

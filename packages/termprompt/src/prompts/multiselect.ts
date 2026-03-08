@@ -1,3 +1,4 @@
+import { isDeepStrictEqual } from "node:util";
 import type { MultiselectConfig, KeyPress, PromptState } from "../types.js";
 import { isSeparator } from "../types.js";
 import type { Cancel } from "../symbols.js";
@@ -21,6 +22,41 @@ import { getTheme } from "../theme.js";
 
 function isSelectable<T>(opt: { disabled?: boolean; separator?: boolean; value?: T }): boolean {
   return !("separator" in opt && opt.separator === true) && !opt.disabled;
+}
+
+function parseResolvedMultiselectValues<T>(
+  resolved: unknown,
+  options: MultiselectConfig<T>["options"],
+  required: boolean,
+): T[] {
+  if (!Array.isArray(resolved)) {
+    throw new Error("Resolve value must be an array");
+  }
+
+  const selectedIndexes = new Set<number>();
+
+  for (const item of resolved) {
+    const index = options.findIndex(
+      (option) =>
+        !isSeparator(option) &&
+        !option.disabled &&
+        isDeepStrictEqual(option.value, item),
+    );
+
+    if (index === -1) {
+      throw new Error("Resolve value contains unknown option");
+    }
+
+    selectedIndexes.add(index);
+  }
+
+  if (required && selectedIndexes.size === 0) {
+    throw new Error("Resolve value must include at least one option");
+  }
+
+  return [...selectedIndexes]
+    .sort((a, b) => a - b)
+    .map((index) => (options[index] as { value: T }).value);
 }
 
 export async function multiselect<T>(
@@ -65,7 +101,7 @@ export async function multiselect<T>(
     .map((o) => {
       const opt = o as { value: T; label: string; hint?: string; disabled?: boolean };
       return {
-        value: String(opt.value),
+        value: opt.value,
         label: opt.label,
         hint: opt.hint,
         disabled: opt.disabled,
@@ -80,8 +116,10 @@ export async function multiselect<T>(
       id: promptId,
       message,
       options: oscOptions,
-      initialValues: initialValues.map(String),
+      initialValues,
     },
+    parseOscResolveValue: (resolved: unknown) =>
+      parseResolvedMultiselectValues(resolved, options, required),
 
     onKey(key: KeyPress, current: { value: T[]; state: PromptState }) {
       if (error) error = null;

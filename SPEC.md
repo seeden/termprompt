@@ -4,7 +4,7 @@
 **Date:** 2026-03-07
 **Status:** Living Standard
 **Authors:** Termprompt Contributors
-**Canonical URL:** https://github.com/nichochar/termprompt/blob/main/SPEC.md
+**Canonical URL:** https://github.com/seeden/termprompt/blob/main/SPEC.md
 **License:** MIT
 
 ---
@@ -956,7 +956,7 @@ New message types or optional fields do not require a version increment.
   https://sw.kovidgoyal.net/kitty/protocol-extensions/
 
 - **[termprompt]** Reference implementation of OSC 7770.
-  https://github.com/nichochar/termprompt
+  https://github.com/seeden/termprompt
 
 ---
 
@@ -965,7 +965,7 @@ New message types or optional fields do not require a version increment.
 ### Plain Text
 
 > OSC 7770: Structured Terminal Prompts, Version 1.0.0, 2026.
-> https://github.com/nichochar/termprompt/blob/main/SPEC.md
+> https://github.com/seeden/termprompt/blob/main/SPEC.md
 
 ### BibTeX
 
@@ -977,7 +977,7 @@ New message types or optional fields do not require a version increment.
   month        = mar,
   type         = {Living Standard},
   version      = {1.0.0},
-  url          = {https://github.com/nichochar/termprompt/blob/main/SPEC.md},
+  url          = {https://github.com/seeden/termprompt/blob/main/SPEC.md},
   note         = {Specification for structured interactive prompt
                   announcements over terminal escape sequences}
 }
@@ -987,13 +987,13 @@ New message types or optional fields do not require a version increment.
 
 Termprompt Contributors. (2026). *OSC 7770: Structured terminal prompts*
 (Version 1.0.0) [Living Standard].
-https://github.com/nichochar/termprompt/blob/main/SPEC.md
+https://github.com/seeden/termprompt/blob/main/SPEC.md
 
 ### Chicago
 
 Termprompt Contributors. "OSC 7770: Structured Terminal Prompts."
 Version 1.0.0. Living Standard, March 2026.
-https://github.com/nichochar/termprompt/blob/main/SPEC.md.
+https://github.com/seeden/termprompt/blob/main/SPEC.md.
 
 ---
 

@@ -23,6 +23,20 @@ type InputState = {
   error: string | null;
 };
 
+const NON_TEXT_KEY_NAMES = new Set([
+  "up",
+  "down",
+  "left",
+  "right",
+  "return",
+  "tab",
+  "backspace",
+  "delete",
+  "home",
+  "end",
+  "escape",
+]);
+
 export async function input(config: InputConfig): Promise<string | Cancel> {
   const { message, placeholder, initialValue = "", validate } = config;
 
@@ -158,7 +172,14 @@ export async function input(config: InputConfig): Promise<string | Cancel> {
       }
 
       // Multi-byte characters (emoji, etc.)
-      if (key.raw.length > 1 && !key.ctrl && !key.meta && key.name.length > 1) {
+      if (
+        key.raw.length > 1 &&
+        !key.raw.startsWith("\x1b") &&
+        !key.ctrl &&
+        !key.meta &&
+        key.name.length > 1 &&
+        !NON_TEXT_KEY_NAMES.has(key.name)
+      ) {
         s.text =
           s.text.slice(0, s.cursorPos) + key.name + s.text.slice(s.cursorPos);
         s.cursorPos += key.name.length;

@@ -1,10 +1,11 @@
 import { stdin as defaultStdin, stdout as defaultStdout } from "node:process";
 import type { Readable, Writable } from "node:stream";
+import { createOscParser } from "@termprompt/protocol";
 import type { KeyPress, PromptState, OscPromptPayload } from "../types.js";
 import { CANCEL, type Cancel } from "../symbols.js";
 import { parseKey } from "./keyboard.js";
 import { cursor, erase, lineCount } from "./renderer.js";
-import { encodePrompt, parseOscResolve } from "../osc/osc.js";
+import { encodePrompt, encodeResolve } from "../osc/osc.js";
 
 export type OnKeyResult<T> = { value: T; state: PromptState } | undefined;
 
@@ -14,6 +15,7 @@ export type PromptOptions<T> = {
     key: KeyPress,
     current: { value: T; state: PromptState },
   ) => OnKeyResult<T>;
+  parseOscResolveValue?: (value: unknown) => T;
   initialValue: T;
   osc?: OscPromptPayload;
   input?: Readable;
@@ -24,6 +26,7 @@ export function createPrompt<T>(options: PromptOptions<T>): Promise<T | Cancel> 
   const {
     render,
     onKey,
+    parseOscResolveValue,
     initialValue,
     osc,
     input = defaultStdin,
@@ -35,6 +38,7 @@ export function createPrompt<T>(options: PromptOptions<T>): Promise<T | Cancel> 
     let state: PromptState = "active";
     let prevFrameLines = 0;
     let resolved = false;
+    const oscParser = osc ? createOscParser() : null;
 
     const isTTY =
       "setRawMode" in input &&
@@ -65,13 +69,18 @@ export function createPrompt<T>(options: PromptOptions<T>): Promise<T | Cancel> 
       process.removeListener("exit", onExit);
     }
 
-    function finish(result: T | Cancel) {
+    function finish(result: T | Cancel, source: "submit-tui" | "submit-host" | "cancel") {
       if (resolved) return;
       resolved = true;
 
       cleanup();
       renderFrame();
       output.write("\n");
+
+      if (source === "submit-tui" && osc) {
+        output.write(encodeResolve(osc.id, result));
+      }
+
       resolve(result);
     }
 
@@ -85,14 +94,25 @@ export function createPrompt<T>(options: PromptOptions<T>): Promise<T | Cancel> 
     }
 
     function onData(data: Buffer) {
-      // Check for OSC resolve from terminal host
-      if (osc) {
-        const oscValue = parseOscResolve(data.toString("utf8"), osc.id);
-        if (oscValue !== null) {
-          value = oscValue as T;
-          state = "submit";
-          finish(value);
-          return;
+      if (osc && oscParser) {
+        const parsed = oscParser.write(data.toString("utf8"));
+
+        for (const message of parsed.messages) {
+          const payload = message.payload;
+          if (payload.type !== "resolve" || payload.id !== osc.id) continue;
+
+          try {
+            const resolvedValue = parseOscResolveValue
+              ? parseOscResolveValue(payload.value)
+              : (payload.value as T);
+
+            value = resolvedValue;
+            state = "submit";
+            finish(value, "submit-host");
+            return;
+          } catch {
+            // Ignore invalid resolve values from terminal hosts
+          }
         }
       }
 
@@ -100,7 +120,7 @@ export function createPrompt<T>(options: PromptOptions<T>): Promise<T | Cancel> 
 
       if (key.ctrl && key.name === "c") {
         state = "cancel";
-        finish(CANCEL);
+        finish(CANCEL, "cancel");
         return;
       }
 
@@ -110,11 +130,11 @@ export function createPrompt<T>(options: PromptOptions<T>): Promise<T | Cancel> 
         state = result.state;
 
         if (state === "submit") {
-          finish(value);
+          finish(value, "submit-tui");
           return;
         }
         if (state === "cancel") {
-          finish(CANCEL);
+          finish(CANCEL, "cancel");
           return;
         }
       }

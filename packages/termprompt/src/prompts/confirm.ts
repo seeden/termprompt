@@ -39,6 +39,12 @@ export async function confirm(
       inactive,
       initialValue,
     },
+    parseOscResolveValue(value: unknown) {
+      if (typeof value !== "boolean") {
+        throw new Error("Resolve value must be boolean");
+      }
+      return value;
+    },
 
     onKey(key: KeyPress, current: { value: boolean; state: PromptState }) {
       if (

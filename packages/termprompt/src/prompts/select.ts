@@ -1,3 +1,4 @@
+import { isDeepStrictEqual } from "node:util";
 import type { SelectConfig, KeyPress, PromptState } from "../types.js";
 import { isSeparator } from "../types.js";
 import type { Cancel } from "../symbols.js";
@@ -20,6 +21,14 @@ import { getTheme } from "../theme.js";
 
 function isSelectable<T>(opt: { disabled?: boolean; separator?: boolean; value?: T }): boolean {
   return !("separator" in opt && opt.separator === true) && !opt.disabled;
+}
+
+function parseResolvedSelectValue<T>(resolved: unknown, configOptions: SelectConfig<T>["options"]): T {
+  for (const option of configOptions) {
+    if (isSeparator(option) || option.disabled) continue;
+    if (isDeepStrictEqual(option.value, resolved)) return option.value;
+  }
+  throw new Error("Invalid resolve value");
 }
 
 export async function select<T>(
@@ -60,7 +69,7 @@ export async function select<T>(
     .map((o) => {
       const opt = o as { value: T; label: string; hint?: string; disabled?: boolean };
       return {
-        value: String(opt.value),
+        value: opt.value,
         label: opt.label,
         hint: opt.hint,
         disabled: opt.disabled,
@@ -75,8 +84,9 @@ export async function select<T>(
       id: promptId,
       message,
       options: oscOptions,
-      initialValue: initialValue !== undefined ? String(initialValue) : undefined,
+      initialValue,
     },
+    parseOscResolveValue: (resolved: unknown) => parseResolvedSelectValue(resolved, options),
 
     onKey(key: KeyPress, current: { value: T; state: PromptState }) {
       if (key.name === "up" || key.name === "k") {

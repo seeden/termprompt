@@ -95,6 +95,21 @@ describe("parseOscResolve", () => {
     expect(result).toBe(42);
   });
 
+  it("finds matching resolve after other OSC messages", () => {
+    const logOsc =
+      '\x1b]7770;{"v":1,"type":"log","level":"info","message":"x"}\x07';
+    const resolveOsc = encodeResolve("my-id", "value");
+    const result = parseOscResolve(`${logOsc}${resolveOsc}`, "my-id");
+    expect(result).toBe("value");
+  });
+
+  it("finds matching resolve when another resolve has different id first", () => {
+    const otherResolve = encodeResolve("other-id", "wrong");
+    const correctResolve = encodeResolve("my-id", "right");
+    const result = parseOscResolve(`${otherResolve}${correctResolve}`, "my-id");
+    expect(result).toBe("right");
+  });
+
   it("handles object values", () => {
     const data = encodeResolve("my-id", { key: "val" });
     const result = parseOscResolve(data, "my-id");

@@ -181,6 +181,25 @@ describe("encodePrompt", () => {
     expect(parsed.v).toBe(1);
     expect(parsed.type).toBe("select");
   });
+
+  it("preserves non-string option values", () => {
+    const payload: OscPromptPayload = {
+      v: 1,
+      type: "select",
+      id: "typed-values",
+      message: "Pick one",
+      options: [{ value: { id: 1 }, label: "One" }, { value: 2, label: "Two" }],
+    };
+
+    const result = encodePrompt(payload);
+    const json = result.slice(OSC_PREFIX.length, -1);
+    const parsed = JSON.parse(json);
+
+    expect(parsed.options).toEqual([
+      { value: { id: 1 }, label: "One" },
+      { value: 2, label: "Two" },
+    ]);
+  });
 });
 
 describe("encodeResolve", () => {

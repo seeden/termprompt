@@ -183,4 +183,208 @@ describe("createPrompt", () => {
     const result = await promise;
     expect(result).toBe("host-picked");
   });
+
+  it("emits OSC resolve when TUI submit completes", async () => {
+    const { input, output, getOutput, pressKey } = createTestStreams();
+
+    const promise = createPrompt({
+      render: () => "prompt",
+      onKey: (key, current) => {
+        if (key.name === "return") {
+          return { value: current.value, state: "submit" };
+        }
+        return undefined;
+      },
+      initialValue: "local-picked",
+      osc: {
+        v: 1,
+        type: "select",
+        id: "tui-submit",
+        message: "Pick",
+      },
+      input,
+      output,
+    });
+
+    pressKey("return");
+    const result = await promise;
+
+    expect(result).toBe("local-picked");
+    const out = getOutput();
+    expect(out).toContain('"type":"resolve"');
+    expect(out).toContain('"id":"tui-submit"');
+    expect(out).toContain('"value":"local-picked"');
+  });
+
+  it("emits OSC resolve with structured values on TUI submit", async () => {
+    const { input, output, getOutput, pressKey } = createTestStreams();
+    const resolvedValue = { id: 7, tags: ["a", "b"] };
+
+    const promise = createPrompt({
+      render: () => "prompt",
+      onKey: (key, current) => {
+        if (key.name === "return") {
+          return { value: current.value, state: "submit" };
+        }
+        return undefined;
+      },
+      initialValue: resolvedValue,
+      osc: {
+        v: 1,
+        type: "select",
+        id: "tui-structured",
+        message: "Pick",
+      },
+      input,
+      output,
+    });
+
+    pressKey("return");
+    const result = await promise;
+
+    expect(result).toEqual(resolvedValue);
+    const out = getOutput();
+    expect(out).toContain('"type":"resolve"');
+    expect(out).toContain('"id":"tui-structured"');
+    expect(out).toContain('"value":{"id":7,"tags":["a","b"]}');
+  });
+
+  it("does not emit OSC resolve for host-resolved prompts", async () => {
+    const { input, output, getOutput } = createTestStreams();
+
+    const promise = createPrompt({
+      render: () => "prompt",
+      onKey: () => undefined,
+      initialValue: "default",
+      osc: {
+        v: 1,
+        type: "select",
+        id: "host-submit",
+        message: "Pick",
+      },
+      input,
+      output,
+    });
+
+    input.write(Buffer.from(encodeResolve("host-submit", "host-picked")));
+    const result = await promise;
+
+    expect(result).toBe("host-picked");
+    expect(getOutput()).not.toContain('"type":"resolve"');
+  });
+
+  it("does not emit OSC resolve when prompt is cancelled", async () => {
+    const { input, output, getOutput, pressKey } = createTestStreams();
+
+    const promise = createPrompt({
+      render: () => "prompt",
+      onKey: (key, current) => {
+        if (key.name === "escape") {
+          return { value: current.value, state: "cancel" };
+        }
+        return undefined;
+      },
+      initialValue: "default",
+      osc: {
+        v: 1,
+        type: "input",
+        id: "cancelled",
+        message: "Name?",
+      },
+      input,
+      output,
+    });
+
+    pressKey("escape");
+    await promise;
+
+    expect(getOutput()).not.toContain('"type":"resolve"');
+  });
+
+  it("ignores invalid host resolve values", async () => {
+    const { input, output, pressKey } = createTestStreams();
+
+    const promise = createPrompt({
+      render: () => "prompt",
+      onKey: (key, current) => {
+        if (key.name === "return") {
+          return { value: current.value, state: "submit" };
+        }
+        return undefined;
+      },
+      parseOscResolveValue(value: unknown) {
+        if (typeof value !== "string") {
+          throw new Error("Resolve value must be string");
+        }
+        return value;
+      },
+      initialValue: "fallback",
+      osc: {
+        v: 1,
+        type: "input",
+        id: "validate-host",
+        message: "Name?",
+      },
+      input,
+      output,
+    });
+
+    input.write(Buffer.from(encodeResolve("validate-host", 42)));
+    pressKey("return");
+    const result = await promise;
+
+    expect(result).toBe("fallback");
+  });
+
+  it("resolves when host OSC arrives split across chunks", async () => {
+    const { input, output } = createTestStreams();
+
+    const promise = createPrompt({
+      render: () => "prompt",
+      onKey: () => undefined,
+      initialValue: "default",
+      osc: {
+        v: 1,
+        type: "select",
+        id: "chunked-host",
+        message: "Pick",
+      },
+      input,
+      output,
+    });
+
+    const resolveData = encodeResolve("chunked-host", "chunked-value");
+    const mid = Math.floor(resolveData.length / 2);
+    input.write(Buffer.from(resolveData.slice(0, mid)));
+    input.write(Buffer.from(resolveData.slice(mid)));
+
+    const result = await promise;
+    expect(result).toBe("chunked-value");
+  });
+
+  it("finds matching resolve when other OSC messages are in the same chunk", async () => {
+    const { input, output } = createTestStreams();
+
+    const promise = createPrompt({
+      render: () => "prompt",
+      onKey: () => undefined,
+      initialValue: "default",
+      osc: {
+        v: 1,
+        type: "select",
+        id: "mixed-osc",
+        message: "Pick",
+      },
+      input,
+      output,
+    });
+
+    const logOsc =
+      '\x1b]7770;{"v":1,"type":"log","level":"info","message":"info"}\x07';
+    const resolveOsc = encodeResolve("mixed-osc", "resolved");
+    input.write(Buffer.from(`${logOsc}${resolveOsc}`));
+
+    const result = await promise;
+    expect(result).toBe("resolved");
+  });
 });

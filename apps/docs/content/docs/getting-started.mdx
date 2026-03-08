@@ -1,0 +1,97 @@
+---
+title: Getting Started
+description: Install termprompt and run your first interactive prompt.
+---
+
+## Installation
+
+```bash
+npm install termprompt
+```
+
+```bash
+pnpm add termprompt
+```
+
+```bash
+yarn add termprompt
+```
+
+Requires Node.js 20 or later. No other dependencies.
+
+## Your First Prompt
+
+```ts
+import { select, isCancel } from 'termprompt';
+
+const color = await select({
+  message: 'Pick a color',
+  options: [
+    { value: 'red', label: 'Red' },
+    { value: 'blue', label: 'Blue' },
+    { value: 'green', label: 'Green' },
+  ],
+});
+
+if (isCancel(color)) {
+  console.log('Cancelled');
+  process.exit(0);
+}
+
+console.log(`You picked: ${color}`);
+```
+
+## Adding Structure
+
+Use `intro` and `outro` to wrap your CLI flow with visual bookends. Use `log` for status messages.
+
+```ts
+import { intro, outro, input, confirm, isCancel, log } from 'termprompt';
+
+intro('create-app');
+
+const name = await input({
+  message: 'Project name?',
+  placeholder: 'my-app',
+});
+
+if (isCancel(name)) process.exit(0);
+
+const git = await confirm({
+  message: 'Initialize git?',
+});
+
+if (isCancel(git)) process.exit(0);
+
+if (git) {
+  log.success('Git initialized.');
+} else {
+  log.info('Skipped git.');
+}
+
+outro('Project created.');
+```
+
+## Brand Theming
+
+Set your colors once at startup. Every prompt, spinner, and log picks them up.
+
+```ts
+import { setTheme } from 'termprompt';
+
+setTheme({
+  accent: '#7c3aed',    // interactive states
+  success: '#22c55e',   // completed/submitted
+});
+```
+
+All five semantic colors (`accent`, `success`, `error`, `warning`, `info`) are customizable. Accepts hex, rgb, named colors, or any `(text: string) => string` function (chalk, picocolors, etc.).
+
+See [Theming](/docs/theming) for the full API.
+
+## What's Next
+
+- [Prompts](/docs/prompts) - All 6 interactive prompt types
+- [Theming](/docs/theming) - Customize your brand colors
+- [Group](/docs/composition/group) - Chain prompts into workflows
+- [Cancel Handling](/docs/advanced/cancel-handling) - How cancellation works

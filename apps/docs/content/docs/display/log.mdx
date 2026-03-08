@@ -1,0 +1,119 @@
+---
+title: Log & Display
+description: Structured logging, intro/outro markers, and notes.
+---
+
+import { Terminal, Cyan, Green, Yellow, Red, Blue, Gray, Dim, Bold, Line } from '@/components/Terminal';
+
+## Preview
+
+<div className="not-prose mb-8">
+
+<Terminal title="log output">
+<Line><Gray>┌</Gray> <Bold>my-cli</Bold></Line>
+<Line><Gray>│</Gray></Line>
+<Line><Blue>ℹ</Blue> Starting build...</Line>
+<Line><Green>◆</Green> Build complete.</Line>
+<Line><Yellow>▲</Yellow> No tests found.</Line>
+<Line><Red>▲</Red> Linter failed.</Line>
+<Line><Gray>│</Gray> Running migrations...</Line>
+<Line><Gray>│</Gray> Plain text, no icon.</Line>
+<Line><Gray>│</Gray></Line>
+<Line><Gray>└</Gray> Done!</Line>
+</Terminal>
+
+</div>
+
+## Intro / Outro
+
+Wrap your CLI flow with visual bookends.
+
+```ts
+import { intro, outro } from 'termprompt';
+
+intro('my-cli');
+// ... prompts ...
+outro('Done!');
+```
+
+Both accept an optional string. Without it, they render just the box-drawing character.
+
+<div className="not-prose mt-4 grid gap-4 md:grid-cols-2">
+
+<Terminal title="intro">
+<Line><Gray>┌</Gray> <Bold>my-cli</Bold></Line>
+<Line><Gray>│</Gray></Line>
+</Terminal>
+
+<Terminal title="outro">
+<Line><Gray>│</Gray></Line>
+<Line><Gray>└</Gray> Done!</Line>
+</Terminal>
+
+</div>
+
+## Log
+
+Structured log messages with colored icons.
+
+```ts
+import { log } from 'termprompt';
+
+log.info('Starting build...');
+log.success('Build complete.');
+log.warn('No tests found.');
+log.error('Build failed.');
+log.step('Running migrations...');
+log.message('Plain text, no icon.');
+```
+
+### Methods
+
+| Method        | Icon          | Theme color |
+| ------------- | ------------- | ----------- |
+| `log.info`    | `ℹ` (info)    | `info`      |
+| `log.success` | `◆` (diamond) | `success`   |
+| `log.warn`    | `▲` (triangle)| `warning`   |
+| `log.error`   | `▲` (triangle)| `error`     |
+| `log.step`    | `│` (bar)     | Gray        |
+| `log.message` | `│` (bar)     | Gray        |
+
+Colors are customizable via [`setTheme`](/docs/theming).
+
+<div className="not-prose mt-4">
+
+<Terminal title="all log levels">
+<Line><Blue>ℹ</Blue> Starting build...</Line>
+<Line><Green>◆</Green> Build complete.</Line>
+<Line><Yellow>▲</Yellow> No tests found.</Line>
+<Line><Red>▲</Red> Build failed.</Line>
+<Line><Gray>│</Gray> Running migrations...</Line>
+<Line><Gray>│</Gray> Plain text, no icon.</Line>
+</Terminal>
+
+</div>
+
+## Note
+
+Display a boxed note with an optional title.
+
+```ts
+import { note } from 'termprompt';
+
+note('Remember to set DATABASE_URL\nbefore running migrations.', 'Important');
+```
+
+<div className="not-prose mt-4">
+
+<Terminal title="note with title">
+<Line><Gray>│</Gray></Line>
+<Line><Gray>│</Gray> <Green>──────────────────────────────────</Green></Line>
+<Line><Gray>│</Gray> <Green><Bold>Important</Bold></Green></Line>
+<Line><Gray>│</Gray> <Dim>Remember to set DATABASE_URL</Dim></Line>
+<Line><Gray>│</Gray> <Dim>before running migrations.</Dim></Line>
+<Line><Gray>│</Gray> <Gray>──────────────────────────────────</Gray></Line>
+</Terminal>
+
+</div>
+
+The note is wrapped in horizontal rules. If a title is provided, it appears in bold above the content, using the [`success`](/docs/theming) theme color.

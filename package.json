@@ -1,31 +1,14 @@
 {
-  "name": "termprompt",
-  "version": "0.1.1",
-  "type": "module",
-  "description": "Beautiful terminal prompts with OSC 7770 structured output for rich terminal hosts",
-  "license": "MIT",
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
-  "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
-    }
-  },
-  "files": [
-    "dist"
-  ],
-  "engines": {
-    "node": ">=20"
-  },
+  "private": true,
+  "version": "0.1.2",
   "scripts": {
-    "build": "tsup",
-    "dev": "tsup --watch",
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "typecheck": "tsc --noEmit",
-    "prepublishOnly": "pnpm build",
-    "release": "pnpm test && pnpm typecheck && pnpm publish --access public"
+    "build": "pnpm -r build",
+    "dev": "pnpm -r --parallel dev",
+    "test": "pnpm -r test",
+    "typecheck": "pnpm -r typecheck",
+    "version:bump": "npm version --no-git-tag-version",
+    "postversion": "pnpm --filter './packages/*' -r exec npm version $npm_package_version --no-git-tag-version",
+    "release": "pnpm -r test && pnpm -r typecheck && pnpm --filter './packages/*' -r publish --access public"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
@@ -39,15 +22,10 @@
   },
   "homepage": "https://seeden.github.io/termprompt/",
   "bugs": "https://github.com/seeden/termprompt/issues",
-  "keywords": [
-    "terminal",
-    "prompt",
-    "cli",
-    "tui",
-    "osc",
-    "select",
-    "confirm",
-    "input",
-    "interactive"
-  ]
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "sharp"
+    ]
+  }
 }

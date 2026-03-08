@@ -1,3 +1,4 @@
+import { parseArgs } from "node:util";
 import {
   setTheme,
   intro,
@@ -16,11 +17,28 @@ import {
   progress,
   tasks,
   isCancel,
-} from "../dist/index.js";
+} from "../packages/termprompt/dist/index.js";
 
-// Set your brand accent color
-// Accepts: hex (#ff6600), rgb/rgba, named colors (magenta, cyan, ...), or a function
-setTheme({ accent: "#7c3aed" });
+// Parse theme flags (hex, rgb, or named colors)
+// Usage: npx tsx examples/basic.ts --color "#ff6600" --success "#22c55e"
+const { values } = parseArgs({
+  options: {
+    color: { type: "string", short: "c", default: "#7c3aed" },
+    success: { type: "string" },
+    error: { type: "string" },
+    warning: { type: "string" },
+    info: { type: "string" },
+  },
+  strict: false,
+});
+
+setTheme({
+  accent: values.color!,
+  ...(values.success && { success: values.success }),
+  ...(values.error && { error: values.error }),
+  ...(values.warning && { warning: values.warning }),
+  ...(values.info && { info: values.info }),
+});
 
 intro("termprompt example");
 

@@ -1,0 +1,42 @@
+{
+  "name": "@termprompt/protocol",
+  "version": "0.1.2",
+  "type": "module",
+  "description": "OSC 7770 protocol parser and encoder for termprompt",
+  "license": "MIT",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "pnpm build",
+    "release": "pnpm test && pnpm typecheck && pnpm publish --access public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/seeden/termprompt.git",
+    "directory": "packages/protocol"
+  },
+  "keywords": [
+    "osc",
+    "osc-7770",
+    "terminal",
+    "protocol",
+    "parser"
+  ]
+}

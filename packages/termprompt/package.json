@@ -1,6 +1,6 @@
 {
   "name": "termprompt",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "type": "module",
   "description": "Beautiful terminal prompts with OSC 7770 structured output for rich terminal hosts",
   "license": "MIT",

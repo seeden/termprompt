@@ -233,8 +233,8 @@ s.start('Installing dependencies...');
 // ... do work
 s.message('Compiling...');
 // ... more work
-s.stop('Installed 142 packages');    // success (green ◆)
-s.stop('Failed', 1);                // error (red ▲)
+s.stop('Installed 142 packages');    // success ◆
+s.stop('Failed', 1);                // error ▲
 ```
 
 ```
@@ -315,10 +315,10 @@ note('cd my-app\nnpm run dev', 'Next steps');
 Structured log lines with icons.
 
 ```typescript
-log.info('Connected to database');     // ⓘ  blue
-log.success('Build complete');         // ◆  green
-log.warn('Deprecated config');         // ▲  yellow
-log.error('Connection failed');        // ▲  red
+log.info('Connected to database');     // ⓘ  info
+log.success('Build complete');         // ◆  success
+log.warn('Deprecated config');         // ▲  warning
+log.error('Connection failed');        // ▲  error
 log.step('Running migrations');        // │  gray
 ```
 
@@ -365,17 +365,21 @@ const answers = await group({
 
 ## Theming
 
-One line. Any color. Flows through every prompt, spinner, and focus indicator.
+Five semantic colors. All optional. Flows through every prompt, spinner, log, and focus indicator.
 
 ```typescript
 import { setTheme } from 'termprompt';
 
-setTheme({ accent: '#7c3aed' });  // hex
-setTheme({ accent: 'cyan' });     // named color
-setTheme({ accent: (text) => `\x1b[35m${text}\x1b[0m` }); // custom function
+setTheme({
+  accent: '#7c3aed',    // interactive states (default: cyan)
+  success: '#22c55e',   // submitted/completed (default: green)
+  error: '#ef4444',     // failures (default: red)
+  warning: '#f59e0b',   // cancel/validation (default: yellow)
+  info: '#3b82f6',      // informational (default: blue)
+});
 ```
 
-Works with chalk, picocolors, or raw ANSI. The accent color is used for active prompt indicators (`◇`), focus states, and interactive highlights.
+Accepts hex, rgb, named colors (`'cyan'`, `'magenta'`), or any `(text: string) => string` function. Works with chalk, picocolors, or raw ANSI.
 
 ## Cancel handling
 
@@ -398,6 +402,14 @@ if (isCancel(result)) {
 ```
 
 `Ctrl+C` or `Escape` triggers cancellation. With `group()`, cancelling any prompt cancels the entire group.
+
+## Full example
+
+See [`examples/basic.ts`](./examples/basic.ts) for a complete example that uses every component: `group`, `input`, `select`, `search`, `number`, `multiselect`, `password`, `confirm`, `spinner`, `progress`, `tasks`, `note`, and `log`.
+
+```bash
+npm run build && node --experimental-strip-types examples/basic.ts
+```
 
 ## OSC 7770
 

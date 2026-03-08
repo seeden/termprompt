@@ -1,0 +1,67 @@
+---
+title: note
+description: Display a boxed note with an optional title.
+---
+
+import { Terminal, Green, Gray, Dim, Bold, Line } from '@/components/Terminal';
+
+## Preview
+
+<div className="not-prose mb-8 grid gap-4 md:grid-cols-2">
+
+<div>
+<p className="mb-2 text-sm text-fd-muted-foreground">With title</p>
+<Terminal title="note">
+<Line><Gray>│</Gray></Line>
+<Line><Gray>│</Gray> <Green>──────────────────────────</Green></Line>
+<Line><Gray>│</Gray> <Green><Bold>Next Steps</Bold></Green></Line>
+<Line><Gray>│</Gray> <Dim>Run the following command</Dim></Line>
+<Line><Gray>│</Gray> <Dim>to start:</Dim></Line>
+<Line><Gray>│</Gray></Line>
+<Line><Gray>│</Gray> <Dim>  npm run dev</Dim></Line>
+<Line><Gray>│</Gray> <Gray>──────────────────────────</Gray></Line>
+</Terminal>
+</div>
+
+<div>
+<p className="mb-2 text-sm text-fd-muted-foreground">Without title</p>
+<Terminal title="note">
+<Line><Gray>│</Gray></Line>
+<Line><Gray>│</Gray> <Gray>──────────────────────────</Gray></Line>
+<Line><Gray>│</Gray> <Dim>All tests passed.</Dim></Line>
+<Line><Gray>│</Gray> <Gray>──────────────────────────</Gray></Line>
+</Terminal>
+</div>
+
+</div>
+
+## Usage
+
+```ts
+import { note } from 'termprompt';
+
+note('Run the following command to start:\n\n  npm run dev', 'Next Steps');
+```
+
+## Parameters
+
+| Param     | Type      | Description                  |
+| --------- | --------- | ---------------------------- |
+| `message` | `string`  | Content (supports newlines)  |
+| `title`   | `string?` | Optional title above content |
+
+## With Title
+
+```ts
+note('DATABASE_URL=postgres://...\nREDIS_URL=redis://...', 'Environment Variables');
+```
+
+The title renders in bold using the [`success`](/docs/theming) theme color, surrounded by horizontal rules.
+
+## Without Title
+
+```ts
+note('All tests passed.');
+```
+
+When no title is provided, the top rule renders in gray.

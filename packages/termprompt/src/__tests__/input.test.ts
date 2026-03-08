@@ -220,6 +220,29 @@ describe("input", () => {
     expect(await promise).toBe("hello ");
   });
 
+  it("does not insert literal key-name tokens like 'up' or 'down'", async () => {
+    const streams = createTestStreams();
+    const promise = testInput({ message: "Name?" }, streams);
+
+    // Simulates hosts that send literal key names instead of escape sequences.
+    streams.input.write(Buffer.from("up"));
+    streams.input.write(Buffer.from("down"));
+    streams.pressKey("return");
+
+    expect(await promise).toBe("");
+  });
+
+  it("does not insert unknown escape sequences as text", async () => {
+    const streams = createTestStreams();
+    const promise = testInput({ message: "Name?" }, streams);
+
+    // Unhandled CSI variant (for example Alt+Up in some terminals)
+    streams.input.write(Buffer.from("\x1b[1;3A"));
+    streams.pressKey("return");
+
+    expect(await promise).toBe("");
+  });
+
   it("handles space", async () => {
     const streams = createTestStreams();
     const promise = testInput({ message: "Name?" }, streams);

@@ -47,13 +47,14 @@ Fields:
 | `initialValues` | `array` | No | Default selected values for multiselect |
 | `active` | `string` | No | Label for "true" in confirm (default: "Yes") |
 | `inactive` | `string` | No | Label for "false" in confirm (default: "No") |
+| `sensitive` | `boolean` | No | Marks prompt as sensitive. Sensitive values must not be sent in OSC `resolve` payloads. |
 
 ### Resolve
 
 Emitted in two scenarios:
 
 1. **By the terminal host** into PTY stdin when the user interacts with the host's native UI
-2. **By the application** to stdout when the TUI prompt resolves normally
+2. **By the application** to stdout when the TUI prompt resolves normally (except `sensitive: true` prompts)
 
 ```
 ESC ] 7770 ; <json> BEL
@@ -92,8 +93,8 @@ The reference implementation provides higher-level prompt types that map to exis
 
 | Variant | Wire Type | Description |
 |---|---|---|
-| `password` | `input` | Text input with masked TUI display. The OSC payload is identical to `input`. The masking is purely a TUI rendering concern. |
-| `number` | `input` | Numeric input with validation, min/max bounds, and up/down stepping. The OSC payload is identical to `input`. Numeric constraints are enforced application-side. |
+| `password` | `input` | Text input with masked TUI display. Should set `sensitive: true`; secret values should return via normal stdin keystrokes, not OSC `resolve`. |
+| `number` | `input` | Numeric input with validation, min/max bounds, and up/down stepping. Numeric resolve values may be string or number. |
 | `search` | `select` | Filterable select with a text query. The OSC payload is identical to `select` (all options included). Filtering is a TUI-side behavior. |
 
 ### Group
@@ -194,8 +195,12 @@ Terminal hosts can render these as toast notifications, status bar updates, or s
 1. Register an OSC handler for code 7770
 2. Parse the JSON payload
 3. If `type` is not `"resolve"`, display a native UI (modal, panel, buttons)
-4. When the user makes a selection, write the resolve sequence into PTY stdin
+4. When the user makes a selection, write the resolve sequence into PTY stdin (except `sensitive: true`, where host should inject keystrokes)
 5. The application's stdin handler detects the resolve and completes the prompt
+
+For prompts with `sensitive: true`, hosts should not send secret values in
+OSC resolve payloads. If intercepting, hosts should inject normal stdin
+keystrokes instead.
 
 The resolve sequence is written as raw bytes into the PTY's stdin file descriptor. The application's prompt library parses it.
 

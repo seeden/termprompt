@@ -32,7 +32,8 @@ for (const msg of messages) {
     case 'confirm':
     case 'input':
     case 'multiselect':
-      // Interactive prompt - show native UI, then resolve
+      // Interactive prompt - show native UI, then resolve.
+      // If payload.sensitive === true, return via stdin keystrokes instead.
       break;
     case 'spinner':
     case 'progress':
@@ -56,6 +57,9 @@ import { encodeResolve } from '@termprompt/protocol';
 const data = encodeResolve(promptId, selectedValue);
 pty.write(data);
 ```
+
+For prompts with `sensitive: true`, do not send secret values in OSC
+`resolve` payloads. Inject normal stdin keystrokes instead.
 
 ### Encode a prompt announcement
 

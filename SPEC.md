@@ -1,9 +1,9 @@
 # OSC 7770: Structured Terminal Prompts
 
-**Version:** 1.1.0
-**Date:** 2026-03-07
+**Version:** 1.1.1
+**Date:** 2026-03-09
 **Status:** Living Standard
-**Authors:** Termprompt Contributors
+**Authors:** Zlatko Fedor
 **Canonical URL:** https://github.com/seeden/termprompt/blob/main/SPEC.md
 **License:** MIT
 
@@ -249,11 +249,12 @@ type. See [Section 8](#8-prompt-types) for per-type field definitions.
 | Field          | Type       | Applicable Types   | Description |
 |----------------|------------|--------------------|-------------|
 | `options`      | `array`    | select, multiselect | Array of option objects. See below. |
-| `placeholder`  | `string`   | input              | Placeholder text shown when value is empty. |
+| `placeholder`  | `string`   | input, select (search variant) | Placeholder text shown when value is empty. |
 | `initialValue` | `any`      | select, confirm, input | Default value. |
 | `initialValues`| `array`    | multiselect        | Default selected values. |
 | `active`       | `string`   | confirm            | Label for the affirmative choice. Default: `"Yes"`. |
 | `inactive`     | `string`   | confirm            | Label for the negative choice. Default: `"No"`. |
+| `sensitive`    | `boolean`  | input              | If `true`, resolved value MUST NOT be transmitted in OSC `resolve` payloads. |
 
 #### Option Object
 
@@ -302,7 +303,8 @@ in two distinct scenarios:
 
 2. **Application -> Terminal host (via stdout).** When the user interacts
    with the TUI fallback normally (no host interception), the application
-   emits a resolve message to stdout after the prompt completes. This
+   emits a resolve message to stdout after the prompt completes (except for
+   prompts marked `sensitive: true`). This
    allows the terminal host to track prompt state even when it chose not
    to intercept.
 
@@ -626,23 +628,30 @@ The `options` array MUST contain at least one non-disabled option. The
 An application-level variant of `input` that masks user input in the TUI.
 The OSC wire type is `"input"`. Terminal hosts that intercept an `input`
 prompt cannot distinguish a password prompt from a regular text input based
-on the OSC payload alone. The masking is purely a TUI rendering concern.
+on the OSC payload alone unless the optional `sensitive` field is present.
+The masking is primarily a TUI rendering concern.
 
 **Wire type:** `"input"`
 **Required fields:** `message`
-**Optional fields:** `placeholder`
+**Optional fields:** `placeholder`, `sensitive` (SHOULD be `true`)
 
 The application renders each typed character as a mask symbol (e.g., `*`)
 in the TUI. The `message` and `placeholder` fields are visible in the OSC
-payload, but the user's typed response is never transmitted via OSC 7770
-(it travels through normal stdin).
+payload.
 
 **Resolve value type:** `string`
 
 #### Security Note
 
-See Section 12.2. The prompt message is transmitted in cleartext. The
-actual password value is never included in an OSC sequence.
+For password prompts, applications SHOULD set `sensitive: true`. For
+`sensitive` prompts:
+
+- The application MUST NOT emit a stdout OSC `resolve` containing the user's value.
+- The terminal host MUST NOT send a stdin OSC `resolve` containing the user's value.
+- If the terminal host intercepts, it SHOULD inject normal stdin keystrokes
+  (as if the user typed) rather than a resolve payload.
+
+See Section 12.2.
 
 ### 8.6. number
 
@@ -658,8 +667,8 @@ The TUI restricts keystroke input to numeric characters (`0-9`, `-`, `.`)
 and supports up/down arrow keys for incrementing and decrementing by a
 configurable step value.
 
-**Resolve value type:** `string` (the terminal host sends a string; the
-application parses it as a number)
+**Resolve value type:** `number` or numeric `string` (the terminal host MAY
+send either; the application parses and validates as number)
 
 #### Terminal Host Rendering Suggestions
 
@@ -732,7 +741,9 @@ When a terminal host receives a prompt announcement (type is `"select"`,
 
 1. **Intercept:** Suppress the TUI rendering and display a native UI
    component. When the user makes a selection, write a resolve message
-   (Section 7.2) into the PTY's stdin file descriptor as raw bytes.
+   (Section 7.2) into the PTY's stdin file descriptor as raw bytes. For
+   prompts with `sensitive: true`, do not send value-carrying resolve
+   payloads; inject normal stdin keystrokes instead.
 
 2. **Observe:** Record the prompt metadata without intercepting. Allow
    the TUI fallback to proceed normally. Optionally listen for the
@@ -740,14 +751,20 @@ When a terminal host receives a prompt announcement (type is `"select"`,
 
 3. **Ignore:** Discard the message entirely.
 
-A terminal host that intercepts a prompt MUST write the resolve message
-before the application's TUI times out or the user interacts with the TUI
-fallback. Race conditions between host-initiated and TUI-initiated input
-are resolved by the application accepting whichever completes first.
+A terminal host that intercepts a prompt MUST complete the interaction
+(resolve message for non-sensitive prompts, or stdin keystroke injection
+for sensitive prompts) before the application's TUI times out or the user
+interacts with the TUI fallback. Race conditions between host-initiated and
+TUI-initiated input are resolved by the application accepting whichever
+completes first.
+
+For prompts with `sensitive: true`, terminal hosts MUST NOT send the secret
+value in an OSC `resolve` payload. If intercepting, hosts SHOULD inject
+normal stdin keystrokes instead.
 
 ### 9.3. Non-Interactive Events
 
-For spinner and log messages, the terminal host MAY render enhanced UI
+For spinner, progress, tasks, and log messages, the terminal host MAY render enhanced UI
 (progress bars, toast notifications, structured log panels). The terminal
 host MUST NOT write any data to PTY stdin in response to these messages.
 
@@ -802,6 +819,9 @@ prefix (`ESC ] 7770 ;`) and extract the JSON payload. If the parsed
 message is a valid resolve for the active prompt, the application MUST
 complete the prompt with the provided value and clean up TUI state.
 
+For prompts marked `sensitive: true`, applications MUST ignore OSC resolve
+payloads that carry user values and rely on normal stdin keystrokes.
+
 Non-matching data on stdin MUST be processed as normal keystroke input.
 
 ---
@@ -843,10 +863,8 @@ resolved values against expected types and ranges.
 Prompt messages and option values are transmitted as cleartext in the OSC
 sequence. Applications SHOULD NOT include secrets, credentials, or
 personally identifiable information in prompt payloads. For password-type
-prompts, the `input` type may be used with the understanding that the
-`placeholder` and `message` fields are visible in the escape sequence, but
-the user's typed response is not transmitted via OSC 7770 (it travels
-through normal stdin).
+prompts, applications SHOULD set `sensitive: true` and MUST NOT transport
+the secret value in OSC resolve payloads in either direction.
 
 ### 12.3. JSON Parsing
 
@@ -964,7 +982,7 @@ New message types or optional fields do not require a version increment.
 
 ### Plain Text
 
-> OSC 7770: Structured Terminal Prompts, Version 1.0.0, 2026.
+> OSC 7770: Structured Terminal Prompts, Version 1.1.1, 2026.
 > https://github.com/seeden/termprompt/blob/main/SPEC.md
 
 ### BibTeX
@@ -972,11 +990,11 @@ New message types or optional fields do not require a version increment.
 ```bibtex
 @techreport{osc7770,
   title        = {{OSC} 7770: Structured Terminal Prompts},
-  author       = {{Termprompt Contributors}},
+  author       = {Zlatko Fedor},
   year         = {2026},
   month        = mar,
   type         = {Living Standard},
-  version      = {1.0.0},
+  version      = {1.1.1},
   url          = {https://github.com/seeden/termprompt/blob/main/SPEC.md},
   note         = {Specification for structured interactive prompt
                   announcements over terminal escape sequences}
@@ -985,19 +1003,27 @@ New message types or optional fields do not require a version increment.
 
 ### APA
 
-Termprompt Contributors. (2026). *OSC 7770: Structured terminal prompts*
-(Version 1.0.0) [Living Standard].
+Fedor, Z. (2026). *OSC 7770: Structured terminal prompts*
+(Version 1.1.1) [Living Standard].
 https://github.com/seeden/termprompt/blob/main/SPEC.md
 
 ### Chicago
 
-Termprompt Contributors. "OSC 7770: Structured Terminal Prompts."
-Version 1.0.0. Living Standard, March 2026.
+Fedor, Zlatko. "OSC 7770: Structured Terminal Prompts."
+Version 1.1.1. Living Standard, March 2026.
 https://github.com/seeden/termprompt/blob/main/SPEC.md.
 
 ---
 
 ## 17. Changelog
+
+### Version 1.1.1 (2026-03-09)
+
+- Added optional `sensitive` prompt field for input-style prompts.
+- Defined secure handling for `sensitive` prompts: no OSC resolve values.
+- Clarified `number` resolve value typing (numeric string or number).
+- Clarified placeholder applicability for search (`select` wire type).
+- Clarified non-interactive handling for `progress` and `tasks`.
 
 ### Version 1.1.0 (2026-03-07)
 

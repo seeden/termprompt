@@ -216,6 +216,38 @@ describe("createPrompt", () => {
     expect(out).toContain('"value":"local-picked"');
   });
 
+  it("does not emit OSC resolve when prompt is sensitive", async () => {
+    const { input, output, getOutput, pressKey } = createTestStreams();
+
+    const promise = createPrompt({
+      render: () => "prompt",
+      onKey: (key, current) => {
+        if (key.name === "return") {
+          return { value: current.value, state: "submit" };
+        }
+        return undefined;
+      },
+      initialValue: "super-secret",
+      osc: {
+        v: 1,
+        type: "input",
+        id: "sensitive-submit",
+        message: "Password?",
+        sensitive: true,
+      },
+      input,
+      output,
+    });
+
+    pressKey("return");
+    const result = await promise;
+
+    expect(result).toBe("super-secret");
+    const out = getOutput();
+    expect(out).not.toContain('"type":"resolve"');
+    expect(out).not.toContain("super-secret");
+  });
+
   it("emits OSC resolve with structured values on TUI submit", async () => {
     const { input, output, getOutput, pressKey } = createTestStreams();
     const resolvedValue = { id: 7, tags: ["a", "b"] };
@@ -270,6 +302,38 @@ describe("createPrompt", () => {
     const result = await promise;
 
     expect(result).toBe("host-picked");
+    expect(getOutput()).not.toContain('"type":"resolve"');
+  });
+
+  it("ignores host OSC resolve for sensitive prompts", async () => {
+    const { input, output, getOutput, pressKey } = createTestStreams();
+
+    const promise = createPrompt({
+      render: () => "prompt",
+      onKey: (key, current) => {
+        if (key.name === "return") {
+          return { value: current.value, state: "submit" };
+        }
+        return undefined;
+      },
+      initialValue: "typed-secret",
+      osc: {
+        v: 1,
+        type: "input",
+        id: "sensitive-host",
+        message: "Password?",
+        sensitive: true,
+      },
+      input,
+      output,
+    });
+
+    input.write(Buffer.from(encodeResolve("sensitive-host", "host-secret")));
+    pressKey("return");
+    const result = await promise;
+
+    expect(result).toBe("typed-secret");
+    expect(getOutput()).not.toContain('"value":"host-secret"');
     expect(getOutput()).not.toContain('"type":"resolve"');
   });
 

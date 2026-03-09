@@ -77,7 +77,8 @@ export function createPrompt<T>(options: PromptOptions<T>): Promise<T | Cancel> 
       renderFrame();
       output.write("\n");
 
-      if (source === "submit-tui" && osc) {
+      // Sensitive prompts must never echo resolved values via OSC on stdout.
+      if (source === "submit-tui" && osc && !osc.sensitive) {
         output.write(encodeResolve(osc.id, result));
       }
 
@@ -100,6 +101,7 @@ export function createPrompt<T>(options: PromptOptions<T>): Promise<T | Cancel> 
         for (const message of parsed.messages) {
           const payload = message.payload;
           if (payload.type !== "resolve" || payload.id !== osc.id) continue;
+          if (osc.sensitive) continue;
 
           try {
             const resolvedValue = parseOscResolveValue

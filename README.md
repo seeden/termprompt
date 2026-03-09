@@ -157,6 +157,8 @@ Keys: `Space` to toggle, `a` to toggle all, `Enter` to submit.
 ### password
 
 Masked text input.
+Password prompts are marked as sensitive: secret values are not sent in OSC
+`resolve` payloads.
 
 ```typescript
 const secret = await password({
@@ -420,6 +422,9 @@ ESC ] 7770 ; {"v":1,"type":"select","id":"...","message":"Pick a framework","opt
 ```
 
 Terminal hosts (web terminals, IDE terminals, multiplexers) can register an OSC handler for code `7770`, intercept the payload, and render native UI (dropdowns, modals, checkboxes, progress bars) instead of the TUI. When the user makes a selection, the host writes a resolve message back to PTY stdin.
+
+For sensitive prompts (for example `password`), hosts should return values as
+normal PTY keystrokes instead of OSC `resolve` payload values.
 
 Terminals that don't support OSC 7770 silently ignore the sequences per ECMA-48. The TUI works exactly as it would without the protocol.
 

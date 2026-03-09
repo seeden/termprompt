@@ -46,6 +46,7 @@ export async function password(
       type: "input",
       id: promptId,
       message,
+      sensitive: true,
       placeholder: undefined,
     },
     parseOscResolveValue(value: unknown) {

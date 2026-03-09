@@ -3,6 +3,7 @@ export type OscPromptPayload = {
   type: "select" | "confirm" | "input" | "multiselect";
   id: string;
   message: string;
+  sensitive?: boolean;
   options?: Array<{
     value: unknown;
     label: string;
